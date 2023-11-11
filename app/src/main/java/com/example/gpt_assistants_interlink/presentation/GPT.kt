@@ -1,8 +1,6 @@
 package com.example.gpt_assistants_interlink.presentation
 
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import com.google.android.datatransport.runtime.logging.Logging
 import io.ktor.client.*
 import io.ktor.client.engine.android.*
 import io.ktor.client.features.*
@@ -11,15 +9,14 @@ import io.ktor.client.features.json.serializer.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import okhttp3.internal.concurrent.TaskRunner.Companion.logger
-import java.util.logging.Logger
 
 // Constants
 val OPENAI_KEY = ""  // Hardcode your key for mobile access without a server
 val GPT_MODEL = "gpt-3.5-turbo-16k"  // I recommend changing to gpt-4-1106-preview if you have access
+val JSONSERIALIZER = KotlinxSerializer(Json {
+    ignoreUnknownKeys = true
+    // other configuration if needed
+})
 
 
 // Assistant set up
@@ -51,14 +48,10 @@ suspend fun create_assistant(instructions: String, name: String,
      */
 
     // Prepare the HTTP client
-    val jsonSerializer = KotlinxSerializer(Json {
-        ignoreUnknownKeys = true
-        // other configuration if needed
-    })
 
     val client = HttpClient(Android) {
         install(JsonFeature) {
-            serializer = jsonSerializer
+            serializer = JSONSERIALIZER
         }
     }
 
@@ -106,22 +99,16 @@ suspend fun list_assistants(): List<Assistant> {
 
     :return: List of Assistant
      */
-    
+
     val OPENAI_BASE_URL = "https://api.openai.com/v1/assistants"
     val CONTENT_TYPE_HEADER = "Content-Type"
     val AUTHORIZATION_HEADER = "Authorization"
     val OPENAI_BETA_HEADER = "OpenAI-Beta"
     val OPENAI_BETA_VALUE = "assistants=v1"
 
-
-    val jsonSerializer = KotlinxSerializer(Json {
-        ignoreUnknownKeys = true
-        // other configuration if needed
-    })
-
     val client = HttpClient(Android) {
         install(JsonFeature) {
-            serializer = jsonSerializer
+            serializer = JSONSERIALIZER
         }
         defaultRequest {
             header(CONTENT_TYPE_HEADER, "application/json")
@@ -159,10 +146,35 @@ class Chatbot(val model: String){
 class GPT(val assistant_id: String){
     var thread_id: String = ""
 
-    suspend fun create_thread(): ThreadObject{
-        // Add code to make a new thread from api. Holds coroutine until completed or fail.
+    suspend fun create_thread(): ThreadObject {
+        // Add code to make a new thread from the API and return a thread object. Holds coroutine until completed or fails.
 
-        return ThreadObject() // This will be an error until the function is filled out lol
+        val url = "https://api.openai.com/v1/threads"
+
+        val client = HttpClient(Android) {
+            install(JsonFeature) {
+                serializer = JSONSERIALIZER
+            }
+        }
+
+        try {
+            val response: ThreadObject = client.post(url) {
+                header("Content-Type", "application/json")
+                header("Authorization", "Bearer $OPENAI_KEY")
+                header("OpenAI-Beta", "assistants=v1")
+                body = ""
+            }
+            return response
+        } catch (e: ClientRequestException) {
+            // Handle error when server responds with client error status (4xx)
+            throw e
+        } catch (e: ServerResponseException) {
+            // Handle error when server responds with server error status (5xx)
+            throw e
+        } catch (e: Exception) {
+            // Handle all other exceptions
+            throw e
+        }
     }
 
     suspend fun load_thread(assistant: String): Boolean{
