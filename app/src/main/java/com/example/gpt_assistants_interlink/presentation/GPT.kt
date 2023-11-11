@@ -187,13 +187,24 @@ class GPT(val assistant_id: String){
         return false
     }
 
-    suspend fun create_message(content: String): MessageResponse{
+    suspend fun create_message(content: String): MessageResponse {
+        val client = HttpClient(Android) {
+            install(JsonFeature) {
+                serializer = JSONSERIALIZER
+            }
+        }
 
-        /*
-        This creates a message from the API. Holds coroutine until complete or fail.
-         */
+        val payload = ApiMessagePayload(role = "user", content = content)
+        val response: MessageResponse = client.post("https://api.openai.com/v1/threads/thread_abc123/messages") {
+            header("Content-Type", "application/json")
+            header("Authorization", "Bearer $OPENAI_KEY")
+            header("OpenAI-Beta", "assistants=v1")
+            contentType(ContentType.Application.Json)
+            body = payload
+        }
 
-        return MessageResponse()
+        client.close()
+        return response
     }
 
     suspend fun run_thread(): ThreadObject{

@@ -134,3 +134,6 @@ data class AssistantCreationRequest(
     val tools: List<Tool>,
     val model: String
 )
+
+@Serializable
+data class ApiMessagePayload(val role: String, val content: String)
