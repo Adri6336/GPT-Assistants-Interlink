@@ -207,14 +207,53 @@ class GPT(val assistant_id: String){
         return response
     }
 
-    suspend fun run_thread(): ThreadObject{
-
+    suspend fun run_thread(): ThreadRun{
         /*
         This calls the run function from the api on a thread,
         then periodically checks in to see the status of the
         thread run.
          */
+        val client = HttpClient(Android) {
+            install(JsonFeature) {
+                serializer = JSONSERIALIZER
+            }
+        }
 
-        return ThreadObject()
+        val payload = CreateRun(assistant_id)
+        val response: ThreadRun = client.post("https://api.openai.com/v1/threads/$thread_id/runs"){
+            header("Content-Type", "application/json")
+            header("Authorization", "Bearer $OPENAI_KEY")
+            header("OpenAI-Beta", "assistants=v1")
+            contentType(ContentType.Application.Json)
+            body = payload
+        }
+
+        client.close()
+        return response
     }
+
+    suspend fun run_status(current_run: ThreadRun): String {
+        /*
+        This checks on the run to determine if finished or requires another step.
+         */
+        val client = HttpClient(Android) {
+            install(JsonFeature) {
+                serializer = JSONSERIALIZER
+            }
+        }
+
+        val payload = PollRun(current_run.id)  // Thread run id
+
+        val response: ThreadRun = client.post("https://api.openai.com/v1/threads/$thread_id/runs") {
+            header("Content-Type", "application/json")
+            header("Authorization", "Bearer $OPENAI_KEY")
+            header("OpenAI-Beta", "assistants=v1")
+            contentType(ContentType.Application.Json)
+            body = payload
+        }
+
+        client.close()
+        return response.status
+    }
+
 }

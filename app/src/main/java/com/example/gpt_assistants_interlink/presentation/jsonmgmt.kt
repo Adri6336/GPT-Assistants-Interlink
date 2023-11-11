@@ -137,3 +137,9 @@ data class AssistantCreationRequest(
 
 @Serializable
 data class ApiMessagePayload(val role: String, val content: String)
+
+@Serializable
+data class CreateRun(val assistant_id: String)
+
+@Serializable
+data class PollRun(val run_id: String)
