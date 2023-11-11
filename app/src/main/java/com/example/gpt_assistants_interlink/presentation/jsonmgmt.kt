@@ -126,3 +126,11 @@ data class StepDetails(
 data class MessageCreation(
     val message_id: String
 )
+
+@Serializable
+data class AssistantCreationRequest(
+    val instructions: String,
+    val name: String,
+    val tools: List<Tool>,
+    val model: String
+)

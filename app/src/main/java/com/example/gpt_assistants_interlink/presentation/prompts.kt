@@ -1,6 +1,6 @@
 package com.example.gpt_assistants_interlink.presentation
 
-val selector = """
+val Selector_Sys_Prompt = """
     You determine the proper place where a message should go and reply with the name (and only the name) of the assistant that would best be suited to respond to the user's prompt. The following are your options:
 
     GAI-translator: handles translating non-english content into english and the translation of english into other languages.
