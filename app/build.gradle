@@ -81,6 +81,8 @@ dependencies {
     implementation "io.ktor:ktor-client-json:1.6.7"
     implementation 'io.ktor:ktor-client-serialization:1.6.7'
     implementation 'io.ktor:ktor-client-android:1.6.7'
+    implementation 'com.google.code.gson:gson:2.8.8'
+    implementation 'io.ktor:ktor-client-gson:1.6.7'
     implementation 'com.squareup.okhttp3:okhttp:4.9.3'
     implementation 'com.google.mlkit:language-id:16.0.0'
     implementation "com.google.android.horologist:horologist-compose-tools:$horologist_version"

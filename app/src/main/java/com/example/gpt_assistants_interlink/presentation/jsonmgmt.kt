@@ -1,6 +1,8 @@
 package com.example.gpt_assistants_interlink.presentation
 
+import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 
@@ -29,7 +31,15 @@ data class ThreadObject(
     val id: String,
     val `object`: String,
     val created_at: Long,
-    val metadata: JsonObject // Assuming metadata can contain arbitrary JSON, use JsonObject
+)
+
+@Serializable
+data class MessagesListResponse(
+    @SerializedName("object") val object_type: String,
+    val data: List<MessageResponse>,
+    val first_id: String,
+    val last_id: String,
+    val has_more: Boolean
 )
 
 @Serializable
@@ -43,7 +53,7 @@ data class MessageResponse(
     val file_ids: List<String>,
     val assistant_id: String,
     val run_id: String,
-    val metadata: JsonObject
+    val metadata: Map<String, Any> // Using a map to represent JSON object
 )
 
 @Serializable
@@ -67,16 +77,9 @@ data class ThreadRun(
     val thread_id: String,
     val status: String,
     val started_at: Long,
-    val expires_at: JsonNull? = null,
-    val cancelled_at: JsonNull? = null,
-    val failed_at: JsonNull? = null,
     val completed_at: Long,
-    val last_error: JsonNull? = null,
     val model: String,
-    val instructions: JsonNull? = null,
     val tools: List<Tool>,
-    val file_ids: List<JsonNull> = emptyList(),
-    val metadata: Map<String, JsonNull> = emptyMap()
 )
 
 @Serializable
@@ -89,8 +92,7 @@ data class Assistant(
     val model: String,
     val instructions: String,
     val tools: List<Tool>,
-    val file_ids: List<String>,
-    val metadata: JsonObject // Assuming metadata is a map-like structure, JsonObject can be used for an arbitrary JSON object
+    val file_ids: List<String>
 )
 
 @Serializable
@@ -143,3 +145,4 @@ data class CreateRun(val assistant_id: String)
 
 @Serializable
 data class PollRun(val run_id: String)
+

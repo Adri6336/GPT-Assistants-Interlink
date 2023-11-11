@@ -1,5 +1,6 @@
 package com.example.gpt_assistants_interlink.presentation
 
+import android.util.Log
 import androidx.compose.ui.graphics.Color
 import io.ktor.client.*
 import io.ktor.client.engine.android.*
@@ -9,14 +10,12 @@ import io.ktor.client.features.json.serializer.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.Serializable
 
 // Constants
 val OPENAI_KEY = ""  // Hardcode your key for mobile access without a server
 val GPT_MODEL = "gpt-3.5-turbo-16k"  // I recommend changing to gpt-4-1106-preview if you have access
-val JSONSERIALIZER = KotlinxSerializer(Json {
-    ignoreUnknownKeys = true
-    // other configuration if needed
-})
+val JSONSERIALIZER = GsonSerializer()
 
 
 // Assistant set up
@@ -164,6 +163,7 @@ class GPT(val assistant_id: String){
                 header("OpenAI-Beta", "assistants=v1")
                 body = ""
             }
+            thread_id = response.id
             return response
         } catch (e: ClientRequestException) {
             // Handle error when server responds with client error status (4xx)
@@ -195,7 +195,7 @@ class GPT(val assistant_id: String){
         }
 
         val payload = ApiMessagePayload(role = "user", content = content)
-        val response: MessageResponse = client.post("https://api.openai.com/v1/threads/thread_abc123/messages") {
+        val response: MessageResponse = client.post("https://api.openai.com/v1/threads/$thread_id/messages") {
             header("Content-Type", "application/json")
             header("Authorization", "Bearer $OPENAI_KEY")
             header("OpenAI-Beta", "assistants=v1")
@@ -242,18 +242,40 @@ class GPT(val assistant_id: String){
             }
         }
 
-        val payload = PollRun(current_run.id)  // Thread run id
-
-        val response: ThreadRun = client.post("https://api.openai.com/v1/threads/$thread_id/runs") {
+        val response: ThreadRun = client.get("https://api.openai.com/v1/threads/$thread_id/runs/${current_run.id}") {
             header("Content-Type", "application/json")
             header("Authorization", "Bearer $OPENAI_KEY")
             header("OpenAI-Beta", "assistants=v1")
-            contentType(ContentType.Application.Json)
-            body = payload
         }
 
         client.close()
         return response.status
+    }
+
+
+    suspend fun get_newest_message(): String{
+
+        val client = HttpClient(Android) {
+            install(JsonFeature) {
+                serializer = JSONSERIALIZER
+            }
+        }
+
+        val response: MessagesListResponse = client.get("https://api.openai.com/v1/threads/$thread_id/messages?order=desc&limit=1"){
+            header("Content-Type", "application/json")
+            header("Authorization", "Bearer $OPENAI_KEY")
+            header("OpenAI-Beta", "assistants=v1")
+        }
+
+        Log.d("Response", response.toString())
+        client.close()
+
+        val latestMessageContent = response.data.firstOrNull()?.content
+        if (latestMessageContent.isNullOrEmpty()) {
+            throw Exception("No content found in the latest message response.")
+        }
+
+        return latestMessageContent.first().text.value
     }
 
 }

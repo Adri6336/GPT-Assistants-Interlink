@@ -7,9 +7,12 @@
 package com.example.gpt_assistants_interlink.presentation
 
 import android.os.Bundle
+import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
@@ -24,8 +27,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.lang.Exception
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,8 +48,21 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun AppContent() {
-    var buttonText = remember { mutableStateOf("Press Me") }
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+
+    var buttonText = remember { mutableStateOf("Press to Load") }
     var buttonColor = remember { mutableStateOf(Color.Black) }
+    var ready = remember { mutableStateOf(false) }
+    var gpt = GPT("asst_qroDjVhky67l3wfAq3LnqAxw")
+    var main_thread: ThreadObject
+    var step = "start"
+
+    val requestPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ){}
+
 
     Box(
         contentAlignment = Alignment.Center,
@@ -48,12 +70,59 @@ fun AppContent() {
     ) {
         Button(
             onClick = {
-                changeButtonState(
-                    buttonText.value,
-                    buttonColor.value,
-                    onTextChange = { newText -> buttonText.value = newText },
-                    onColorChange = { newColor -> buttonColor.value = newColor }
-                )
+                // TEST
+                if (ready.value){
+                    // Add code here
+
+
+                } else {
+                    coroutineScope.launch(Dispatchers.Main) {
+
+                        try{
+                            buttonColor.value = Color.Red
+                            buttonText.value = "Loading \"What's the square root of 23456789?\""
+
+                            step = "thread start"
+                            main_thread = gpt.create_thread()
+                            buttonColor.value = Color.Magenta
+                            buttonText.value = "Thinking ..."
+
+                            step = "create message"
+                            val create_message_response = gpt.create_message("\"What's the square root of 23456789?\"")
+
+                            step = "run thread"
+                            val run = gpt.run_thread()
+
+                            step = "get state and check into status"
+                            var run_state = run.status
+                            var ct = 0
+                            while (run_state != "completed" && run_state != "expired" && run_state != "failed"){
+                                delay(1000)
+                                run_state = gpt.run_status(run)
+                                buttonText.value = "Thinking ...\nPolled: $ct times"
+                                ct++
+                            }
+
+                            step = "get new message"
+                            val response = gpt.get_newest_message()
+
+                            buttonColor.value = Color.Black
+                            buttonText.value = response
+                            ready.value = true
+                        } catch (e: Exception){
+                            buttonColor.value = Color.Black
+                            buttonText.value = "$step\n${e.toString()}"
+                            Log.d("Error", "$step\n${e.toString()}")
+                            ready.value = true
+                        }
+
+
+                    }
+                }
+
+
+
+
             },
             // Use a custom color scheme for the button
             colors = ButtonDefaults.buttonColors(
