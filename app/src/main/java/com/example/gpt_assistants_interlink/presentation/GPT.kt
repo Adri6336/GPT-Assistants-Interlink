@@ -6,7 +6,7 @@ import kotlinx.serialization.json.JsonPrimitive
 val OPENAI_KEY = ""  // Hardcode your key for mobile access without a server
 val GPT_MODEL = "gpt-3.5-turbo-16k"  // I recommend changing to gpt-4-1106-preview if you have access
 
-val assistants = mapOf(  // In the off chance you've already got an assistant, "GAI-" should avoid conflict
+val assistants = mutableMapOf<String, String>(  // In the off chance you've already got an assistant, "GAI-" should avoid conflict
     "GAI-translator" to "",  // The second part of the map is the assistant id
     "GAI-generalist" to "",  // Code interpreter and retrieval
     "GAI-engineer/mechanic" to "",  // Code interpreter and retrieval
