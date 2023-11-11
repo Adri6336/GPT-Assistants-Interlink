@@ -2,6 +2,7 @@ package com.example.gpt_assistants_interlink.presentation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import com.google.android.datatransport.runtime.logging.Logging
 import io.ktor.client.*
 import io.ktor.client.engine.android.*
 import io.ktor.client.features.*
@@ -13,6 +14,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import okhttp3.internal.concurrent.TaskRunner.Companion.logger
+import java.util.logging.Logger
 
 // Constants
 val OPENAI_KEY = ""  // Hardcode your key for mobile access without a server
@@ -97,11 +100,51 @@ suspend fun create_assistant(instructions: String, name: String,
     }
 }
 
-suspend fun list_assistants(): List<Assistant>{
+suspend fun list_assistants(): List<Assistant> {
     /*
-    This will query the OpenAI API for your assistants and return them as a list.
-    Holds coroutine until complete or fail.
+    This queries the OpenAI API for a list of your assistants.
+
+    :return: List of Assistant
      */
+    
+    val OPENAI_BASE_URL = "https://api.openai.com/v1/assistants"
+    val CONTENT_TYPE_HEADER = "Content-Type"
+    val AUTHORIZATION_HEADER = "Authorization"
+    val OPENAI_BETA_HEADER = "OpenAI-Beta"
+    val OPENAI_BETA_VALUE = "assistants=v1"
+
+
+    val jsonSerializer = KotlinxSerializer(Json {
+        ignoreUnknownKeys = true
+        // other configuration if needed
+    })
+
+    val client = HttpClient(Android) {
+        install(JsonFeature) {
+            serializer = jsonSerializer
+        }
+        defaultRequest {
+            header(CONTENT_TYPE_HEADER, "application/json")
+            header(AUTHORIZATION_HEADER, "Bearer $OPENAI_KEY")
+            header(OPENAI_BETA_HEADER, OPENAI_BETA_VALUE)
+        }
+    }
+
+    try {
+        // Perform the GET request and receive the response as a list of Assistants
+        return client.get<List<Assistant>>(OPENAI_BASE_URL) {
+            parameter("order", "desc")
+            parameter("limit", 100)
+        }
+    } catch (e: Exception) {
+        // Log and/or handle the error accordingly
+        // For demonstration purposes, we're just printing the error
+        println("Error retrieving assistants: $e")
+        throw e
+    } finally {
+        // Close the client to free resources
+        client.close()
+    }
 }
 
 class Chatbot(val model: String){
