@@ -80,6 +80,49 @@ data class ThreadRun(
 )
 
 @Serializable
+data class Assistant(
+    val id: String,
+    val `object`: String,
+    val created_at: Long,
+    val name: String,
+    val description: String?,
+    val model: String,
+    val instructions: String,
+    val tools: List<Tool>,
+    val file_ids: List<String>,
+    val metadata: JsonObject // Assuming metadata is a map-like structure, JsonObject can be used for an arbitrary JSON object
+)
+
+@Serializable
 data class Tool(
     val type: String
+)
+
+@Serializable
+data class Step(
+    val id: String,
+    val `object`: String,
+    val created_at: Long,
+    val run_id: String,
+    val assistant_id: String,
+    val thread_id: String,
+    val type: String,
+    val status: String,
+    val cancelled_at: Long?,
+    val completed_at: Long?,
+    val expired_at: Long?,
+    val failed_at: Long?,
+    val last_error: String?,
+    val step_details: StepDetails
+)
+
+@Serializable
+data class StepDetails(
+    val type: String,
+    val message_creation: MessageCreation?
+)
+
+@Serializable
+data class MessageCreation(
+    val message_id: String
 )
