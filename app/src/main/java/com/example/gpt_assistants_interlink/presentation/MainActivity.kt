@@ -193,7 +193,10 @@ fun AppContent() {
                                 }
                             }
 
-                            buttonText.value = response
+                            val summary_bot = Chatbot(GPT_MODEL, SUMMARY_SYS_PROMPT)
+                            val summary = summary_bot.say_to_chatbot(response, 4095)
+
+                            buttonText.value = summary
 
                             // Process TTS ============
 
