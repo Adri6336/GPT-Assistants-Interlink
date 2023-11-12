@@ -134,12 +134,45 @@ suspend fun list_assistants(): List<Assistant> {
     }
 }
 
-class Chatbot(val model: String){
+class Chatbot(val model: String, val system_prompt: String){
     // This will be a simple interface to the model
     var conversation = mutableListOf<Message>()
 
-    suspend fun add_message(content: String){
-        // Say to chatbot, get reply. Prevent coroutine from advancing until complete or fail.
+    init {
+        conversation.add(Message("system", system_prompt))
+    }
+
+    suspend fun say_to_chatbot(content: String, tokens: Int = 250,
+                                    temp: Float = 1f, role: String = "user"
+    ): String {
+
+        var conversation_list: List<Message>
+
+        val client = HttpClient(Android) {
+            install(JsonFeature) {
+                serializer = JSONSERIALIZER
+            }
+        }
+
+        conversation.add(Message("user", content))
+        conversation_list = conversation.toList()
+
+        val chatRequest = ChatRequest(
+            model = model,
+            messages = conversation_list,
+            max_tokens = tokens,
+            temperature = temp
+        )
+
+        val response: ChatResponse = client.post("https://api.openai.com/v1/chat/completions") {
+            header("Content-Type", "application/json")
+            header("Authorization", "Bearer $OPENAI_KEY")
+            contentType(ContentType.Application.Json)
+            body = chatRequest
+        }
+
+        client.close()
+        return response.choices.first().message.content
     }
 }
 

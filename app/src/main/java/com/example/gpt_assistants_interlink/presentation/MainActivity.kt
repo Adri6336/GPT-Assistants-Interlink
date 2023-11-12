@@ -99,7 +99,9 @@ fun AppContent() {
                         try{
                             buttonColor.value = Color.Red
                             buttonText.value = "Thinking ..."
-                            val response = gpt.say_to_assistant("Hello!")
+                            val chatbot = Chatbot("gpt-4-1106-preview", Selector_Sys_Prompt)
+                            val response = chatbot.say_to_chatbot("What's a derivative?")
+                            //val response = gpt.say_to_assistant("Hello!")
 
                             buttonColor.value = Color.Black
                             buttonText.value = response
