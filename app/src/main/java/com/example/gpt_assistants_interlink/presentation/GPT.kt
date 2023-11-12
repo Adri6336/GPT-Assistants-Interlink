@@ -19,25 +19,70 @@ val GPT_MODEL = "gpt-3.5-turbo-16k"  // I recommend changing to gpt-4-1106-previ
 val JSONSERIALIZER = GsonSerializer()
 
 
-// Assistant set up
+// Assistant and Chatbot set up
+data class Abilities(val interpreter: Boolean, val retrieval: Boolean)
+
 data class AssistantSettings(
     val name: String,
     var assistant_id: String,
     val screen_color: Color,  // Color of screen when speaking
-    val text_color: Color  // Color of text when speaking (change to be readable)
+    val text_color: Color,  // Color of text when speaking (change to be readable)
+    val sys_prompt: String,
+    val abilities: Abilities
 )
 
-val assistants = mutableMapOf<String, String>(  // In the off chance you've already got an assistant, "GAI-" should avoid conflict
-    "GAI-translator" to "",  // The second part of the map is the assistant id
-    "GAI-generalist" to "",  // Code interpreter and retrieval
-    "GAI-engineer/mechanic" to "",  // Code interpreter and retrieval
-    "GAI-selector" to "",  // Special function to determine which assistant to use depending on an initial prompt
-    "GAI-friend" to "",
-    "GAI-advisor" to "",
-    "GAI-maths/accounting" to "",  // Gets retrieval and code interpreter
-    "GAI-scientist/physicist" to "",  // code interpreter and retrieval
-    "GAI-life_coach/psychiatrist" to ""
+data class GPTChatModel(val code: String, val max_tokens: Int)
+
+val assistants = listOf<AssistantSettings>(
+    AssistantSettings("GAI-translator", "",
+        Color(51, 204, 255),
+        Color(0, 0, 0),
+        TRANSLATOR_SYS_PROMPT,
+        Abilities(false, false)),
+
+    AssistantSettings("GAI-generalist", "",
+        Color(255, 153, 51),
+        Color(0, 0, 0),
+        GENERALIST_SYS_PROMPT,
+        Abilities(true, true)),
+
+    AssistantSettings("GAI-engineer/mechanic", "",
+        Color(153, 153, 102),
+        Color(0, 0, 0),
+        ENGINEER_SYS_PROMPT,
+        Abilities(true, true)),
+
+    AssistantSettings("GAI-friend", "",
+        Color(153, 153, 255),
+        Color(0, 0, 0),
+        FRIEND_SYS_PROMPT,
+        Abilities(false, false)),
+
+    AssistantSettings("GAI-advisor", "",
+        Color(102, 102, 153),
+        Color(255, 255, 255),
+        ADVISOR_SYS_PROMPT,
+        Abilities(true, false)),
+
+    AssistantSettings("GAI-maths/accounting", "",
+        Color(0, 102, 204),
+        Color(255, 255, 255),
+        MATHEMATICIAN_SYS_PROMPT,
+        Abilities(true, true)),
+
+    AssistantSettings("GAI-scientist/physicist", "",
+        Color(0, 153, 51),
+        Color(0, 0, 0),
+        SCIENTIST_SYS_PROMPT,
+        Abilities(true, true)),
+
+    AssistantSettings("GAI-life_coach/psychiatrist", "",
+        Color(255, 102, 153),
+        Color(0, 0, 0),
+        PSYCHIATRIST_SYS_PROMPT,
+        Abilities(true, true))
 )
+
 suspend fun create_assistant(instructions: String, name: String,
                              code_interpreter: Boolean, retrieval: Boolean): String{
     /*
