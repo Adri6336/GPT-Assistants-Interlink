@@ -7,8 +7,10 @@
 package com.example.gpt_assistants_interlink.presentation
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.VibrationEffect
 import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -84,10 +86,25 @@ fun AppContent() {
     LaunchedEffect(Unit){
         coroutineScope.launch {
             try {
-                requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
-                requestPermissionLauncher.launch(Manifest.permission.VIBRATE)
+
+                if (ContextCompat.checkSelfPermission(context,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+                    ||
+                    ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED
+                    ||
+                    ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+                    ||
+                    ContextCompat.checkSelfPermission(context, Manifest.permission.VIBRATE) != PackageManager.PERMISSION_GRANTED
+                ){
+                    requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    delay(500)
+                    requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    delay(500)
+                    requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+                    delay(500)
+                    requestPermissionLauncher.launch(Manifest.permission.VIBRATE)
+                }
+
 
                 step = "thread start"
                 buttonColor.value = Color.Blue
@@ -119,6 +136,7 @@ fun AppContent() {
             } catch (e: Exception) {
                 // Handle the exception properly
                 Log.d("Error", "Error during pre-instantiating thread: ${e.toString()}")
+                vibrateWatch(context, 200L, VibrationEffect.EFFECT_HEAVY_CLICK)
                 buttonColor.value = Color.Gray
                 buttonText.value = "Error during pre-instantiating thread: ${e.toString()}"
             }
@@ -140,8 +158,12 @@ fun AppContent() {
                     ContextCompat.checkSelfPermission(
                         context,
                         Manifest.permission.RECORD_AUDIO
-                    ) == PackageManager.PERMISSION_GRANTED
+                    ) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(context,
+                        Manifest.permission.READ_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED
                 )
+
                 {
 
                 var response = ""
