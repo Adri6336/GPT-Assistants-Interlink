@@ -137,16 +137,3 @@ fun AppContent() {
         }
     }
 }
-
-fun changeButtonState(
-    text: String,
-    color: Color,
-    onTextChange: (String) -> Unit,
-    onColorChange: (Color) -> Unit
-) {
-    val newText = if (text == "Press Me") "Pressed" else "Press Me"
-    val newColor = if (color == Color.Black) Color.Blue else Color.Gray
-
-    onTextChange(newText)
-    onColorChange(newColor)
-}
