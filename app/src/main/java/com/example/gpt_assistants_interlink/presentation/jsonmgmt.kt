@@ -89,6 +89,13 @@ data class AssistantList(
 )
 
 @Serializable
+data class DeletedAssistantResponse(
+    val id: String,
+    val `object`: String,
+    val deleted: Boolean
+)
+
+@Serializable
 data class Assistant(
     val id: String,
     val `object`: String,

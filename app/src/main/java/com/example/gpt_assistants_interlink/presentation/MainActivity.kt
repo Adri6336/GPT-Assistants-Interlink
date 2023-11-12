@@ -105,10 +105,10 @@ fun AppContent() {
                         try{
 
                             buttonText.value = "Test IO"
-                            writeTextToFile(context, "testfile.txt", "THIS IS A TESSST :D")
-                            val data = readTextFromFile(context, "testfile.txt")
+                            //val data = readTextFromFile(context, "assistant_ids.txt")
+                            //Log.d("IDS", data)
 
-
+                            //purge_assistants(context)
 
                             //buttonColor.value = Color.Red
                             //buttonText.value = "Thinking ..."
@@ -117,7 +117,7 @@ fun AppContent() {
                             //val response = gpt.say_to_assistant("Hello!")
 
                             buttonColor.value = Color.Black
-                            buttonText.value = data
+                            buttonText.value = "CHEESE :D"
 
                         } catch (e: Exception){
                             Log.d("Error", e.toString())

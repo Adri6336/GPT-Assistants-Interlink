@@ -172,6 +172,42 @@ suspend fun list_assistants(): AssistantList{
     return response
 }
 
+suspend fun delete_assistant(assistant_id: String): Boolean{
+    val client = HttpClient(Android) {
+        install(JsonFeature) {
+            serializer = JSONSERIALIZER
+        }
+    }
+
+    val response: DeletedAssistantResponse = client.delete("https://api.openai.com/v1/assistants/$assistant_id"){
+        header("Content-Type", "application/json")
+        header("Authorization", "Bearer $OPENAI_KEY")
+        header("OpenAI-Beta", "assistants=v1")
+    }
+
+    client.close()
+
+    return response.deleted
+}
+
+suspend fun purge_assistants(context: Context){
+    var failed_deletions = ""
+    try{
+        failed_deletions = readTextFromFile(context, "failed_deletion_list.txt")
+    } catch (e: Exception){
+        failed_deletions = ""
+    }
+
+
+    for (assistant in assistants){
+        val success = delete_assistant(assistant.assistant_id)
+        if (!success){
+            failed_deletions = "$failed_deletions${assistant.assistant_id}\n"
+        }
+    }
+
+    writeTextToFile(context, "failed_deletion_list.txt", failed_deletions)
+}
 
 suspend fun load_ids(context: Context){
     val ids = readTextFromFile(context, "assistant_ids.txt").split("\n")
@@ -183,6 +219,7 @@ suspend fun load_ids(context: Context){
     var pos = 0  // This represents your current position in the list of assistants
     for (setting in assistants){
         setting.assistant_id = ids[pos]
+        Log.d(setting.name, setting.assistant_id)
         pos++
     }
 
