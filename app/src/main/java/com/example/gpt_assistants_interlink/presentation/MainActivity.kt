@@ -39,6 +39,7 @@ import java.lang.Exception
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             AppContent()
@@ -55,13 +56,34 @@ fun AppContent() {
     var buttonText = remember { mutableStateOf("Press to Load") }
     var buttonColor = remember { mutableStateOf(Color.Black) }
     var ready = remember { mutableStateOf(false) }
-    var gpt = GPT("asst_qroDjVhky67l3wfAq3LnqAxw")
+    var gpt = remember {GPT("asst_qroDjVhky67l3wfAq3LnqAxw")}
     var main_thread: ThreadObject
     var step = "start"
 
     val requestPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ){}
+
+    LaunchedEffect(Unit){
+        coroutineScope.launch {
+            try {
+                step = "thread start"
+                buttonColor.value = Color.Blue
+                buttonText.value = "Setting Up Interlink"
+                main_thread = gpt.create_thread()
+                buttonText.value = "Ready For Use"
+                buttonColor.value = Color.Black
+                ready.value = true
+
+            } catch (e: Exception) {
+                // Handle the exception properly
+                Log.d("Error", "Error during pre-instantiating thread: ${e.toString()}")
+                buttonColor.value = Color.Gray
+                buttonText.value = "Error during pre-instantiating thread: ${e.toString()}"
+            }
+
+        }
+    }
 
 
     Box(
@@ -80,15 +102,13 @@ fun AppContent() {
 
                         try{
                             buttonColor.value = Color.Red
-                            buttonText.value = "Loading \"What's the square root of 23456789?\""
+                            buttonText.value = "C=59(F−32)The equation above shows how temperature F, measured in degrees Fahrenheit, relates to a temperature C, measured in degrees Celsius. Based on the equation, which of the following must be true?A temperature increase of 1 degree Fahrenheit is equivalent to a temperature increase of 59 degree Celsius.A temperature increase of 1 degree Celsius is equivalent to a temperature increase of 1.8 degrees Fahrenheit.A temperature increase of 59 degree Fahrenheit is equivalent to a temperature increase of 1 degree Celsius."
 
-                            step = "thread start"
-                            main_thread = gpt.create_thread()
                             buttonColor.value = Color.Magenta
                             buttonText.value = "Thinking ..."
 
                             step = "create message"
-                            val create_message_response = gpt.create_message("\"What's the square root of 23456789?\"")
+                            val create_message_response = gpt.create_message("C=59(F−32)The equation above shows how temperature F, measured in degrees Fahrenheit, relates to a temperature C, measured in degrees Celsius. Based on the equation, which of the following must be true?A temperature increase of 1 degree Fahrenheit is equivalent to a temperature increase of 59 degree Celsius.A temperature increase of 1 degree Celsius is equivalent to a temperature increase of 1.8 degrees Fahrenheit.A temperature increase of 59 degree Fahrenheit is equivalent to a temperature increase of 1 degree Celsius.")
 
                             step = "run thread"
                             val run = gpt.run_thread()

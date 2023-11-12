@@ -21,7 +21,7 @@ val JSONSERIALIZER = GsonSerializer()
 // Assistant set up
 data class AssistantSettings(
     val name: String,
-    val assistant_id: String,
+    var assistant_id: String,
     val screen_color: Color,  // Color of screen when speaking
     val text_color: Color  // Color of text when speaking (change to be readable)
 )
