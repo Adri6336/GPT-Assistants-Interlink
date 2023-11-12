@@ -194,6 +194,7 @@ fun AppContent() {
                     // START ================
                     coroutineScope.launch {
                         try{
+                            var flagged = false
                             screen_locked.value = true  // Prevent user from tapping again
 
                             // RECORD AND MODERATE ==============
@@ -250,6 +251,7 @@ fun AppContent() {
                                 gpt.value = GPT(assistant.value.assistant_id)
                                 gpt.value.load_or_create_thread(context)
                                 connect_message = "Connected to ${assistant.value.name}"
+                                vibrateWatch(context)
                                 buttonText.value = connect_message
                                 use_device_pronounced_tts(connect_message, coroutineScope,
                                     context, speaking,
@@ -277,16 +279,43 @@ fun AppContent() {
                                 system_command = true
                                 buttonText.value = last_prompt.value
                                 buttonColor.value = Color.Black
+
+                            } else if (prompt.contains("please clear memory", ignoreCase = true) ||
+                                    prompt.contains("please wipe memory", ignoreCase = true)){
+                                system_command = true
+                                delete_file(context, "${assistant.value.assistant_id}.txt")
+                                gpt.value.load_or_create_thread(context)
+
+                                buttonColor.value = Color.Black
+                                buttonText.value = "Memory wiped for ${assistant.value.name}."
+                                vibrateWatch(context)
+
+                            } else if (prompt.contains("please wipe all memory", ignoreCase = true) ||
+                                    prompt.contains("Please clear all memory", ignoreCase = true)){
+                                system_command = true
+                                for (setting in assistants){
+                                    if (file_exists(context, "${setting.assistant_id}.txt")){
+                                        delete_file(context, "${setting.assistant_id}.txt")
+                                    }
+                                }
+
+                                gpt.value.load_or_create_thread(context)
+
+                                buttonColor.value = Color.Black
+                                buttonText.value = "All memory wiped"
+                                vibrateWatch(context)
                             }
 
                             // Enter command processing code here
+                            flagged = moderate(prompt)
+
                             if (!system_command){  // Only process non-commands
                                 last_prompt.value = prompt
                                 if (selected.value){  // Thread already loaded
                                     buttonText.value = "${assistant.value.name} thinking ..."
                                     buttonColor.value = Color.Red
                                     buttonTextColor.value = Color.White
-                                    if (!moderate(prompt)){
+                                    if (!flagged){
                                         response = gpt.value.say_to_assistant(prompt)
                                     }
 
@@ -300,12 +329,12 @@ fun AppContent() {
                                     buttonText.value = "${assistant.value.name} thinking ..."
                                     buttonColor.value = Color.Red
                                     buttonTextColor.value = Color.White
-                                    if (!switch && !moderate(prompt)){
+                                    if (!switch && !flagged){
                                         response = gpt.value.say_to_assistant(prompt)
                                     }
                                 }
 
-                                if (!switch){
+                                if (!switch && !flagged){  
                                     val summary_bot = Chatbot(GPT_MODEL, SUMMARY_SYS_PROMPT)
                                     val summary = summary_bot.say_to_chatbot(response, 4095)
 
@@ -322,7 +351,7 @@ fun AppContent() {
 
 
                                 // Process TTS ============
-                                if (!openai_tts.value){
+                                if (!openai_tts.value || flagged){
                                     use_device_pronounced_tts(response, coroutineScope,
                                         context, speaking,
                                         assistant.value, buttonColor,
