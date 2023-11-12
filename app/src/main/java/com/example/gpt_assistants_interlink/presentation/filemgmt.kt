@@ -9,7 +9,7 @@ import java.io.FileInputStream
 
 
 @Throws(IOException::class)
-fun writeTextToFile(context: Context, fileName: String, text: String, isPublic: Boolean = false) {
+fun write_text_to_file(context: Context, fileName: String, text: String, isPublic: Boolean = false) {
     /**
      * Writes the given text to a file.
      *
@@ -44,7 +44,7 @@ fun writeTextToFile(context: Context, fileName: String, text: String, isPublic: 
 
 
 @Throws(IOException::class)
-fun readTextFromFile(context: Context, fileName: String, isPublic: Boolean = false): String {
+fun read_text_from_file(context: Context, fileName: String, isPublic: Boolean = false): String {
     /**
      * Reads text from a file.
      *
@@ -71,4 +71,49 @@ fun readTextFromFile(context: Context, fileName: String, isPublic: Boolean = fal
     return fileInputStream.use { inputStream ->
         inputStream.bufferedReader().use { it.readText() }
     }
+}
+
+@Throws(IOException::class)
+fun append_or_create_file(context: Context, fileName: String, text: String, append: Boolean = true) {
+    /**
+     * Appends text to the specified file, or creates the file if it doesn't already exist.
+     *
+     * @param context The context of the application or activity.
+     * @param fileName The name of the file to write to.
+     * @param text The content to append to the file.
+     * @param append Whether to append to the file if it exists, or overwrite.
+     * @throws IOException If an I/O error occurs.
+     */
+
+    // Open a file output stream in append or overwrite mode.
+    context.openFileOutput(fileName, if (append) Context.MODE_APPEND else Context.MODE_PRIVATE).use { outputStream ->
+        // Write the text content to the file.
+        outputStream.write(text.toByteArray())
+        // Ensure the written content is flushed to the file.
+        outputStream.flush()
+    }
+}
+
+fun delete_file(context: Context, fileName: String): Boolean {
+    /**
+     * Deletes the file with the given file name from the internal storage.
+     *
+     * @param context The context of the application or activity.
+     * @param fileName The name of the file to delete.
+     * @return True if the file was successfully deleted, false otherwise.
+     */
+    val file = File(context.filesDir, fileName)
+    return file.delete()
+}
+
+fun file_exists(context: Context, fileName: String): Boolean {
+    /**
+     * Checks if a file exists in the application's internal storage.
+     *
+     * @param context The context of the application.
+     * @param fileName Name of the file for which existence has to be checked.
+     * @return True if the file exists, false otherwise.
+     */
+    val file = File(context.filesDir, fileName)
+    return file.exists()
 }

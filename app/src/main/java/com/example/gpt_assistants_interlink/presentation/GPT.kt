@@ -2,18 +2,14 @@ package com.example.gpt_assistants_interlink.presentation
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.graphics.Color
 import io.ktor.client.*
 import io.ktor.client.engine.android.*
 import io.ktor.client.features.*
 import io.ktor.client.features.json.*
-import io.ktor.client.features.json.serializer.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.delay
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.Serializable
 
 // Constants
 val OPENAI_KEY = ""  // Hardcode your key for mobile access without a server
@@ -24,6 +20,10 @@ val JSONSERIALIZER = GsonSerializer()
 // Assistant and Chatbot set up
 fun List<Assistant>.findAssistantByName(name: String): Assistant? {
     return this.find { it.name.contains(name, ignoreCase = true) }
+}
+
+fun List<AssistantSettings>.findAssistantByName(name: String): AssistantSettings?{
+    return this.find {it.name.contains(name, ignoreCase = true)}
 }
 
 data class Abilities(val interpreter: Boolean, val retrieval: Boolean)
@@ -193,7 +193,10 @@ suspend fun delete_assistant(assistant_id: String): Boolean{
 suspend fun purge_assistants(context: Context){
     var failed_deletions = ""
     try{
-        failed_deletions = readTextFromFile(context, "failed_deletion_list.txt")
+        if (file_exists(context, "failed_deletion_list.txt")){
+            failed_deletions = read_text_from_file(context, "failed_deletion_list.txt")
+        }
+
     } catch (e: Exception){
         failed_deletions = ""
     }
@@ -203,14 +206,23 @@ suspend fun purge_assistants(context: Context){
         val success = delete_assistant(assistant.assistant_id)
         if (!success){
             failed_deletions = "$failed_deletions${assistant.assistant_id}\n"
+        } else {
+            delete_file(context, "${assistant.assistant_id}.txt")
         }
     }
 
-    writeTextToFile(context, "failed_deletion_list.txt", failed_deletions)
+    write_text_to_file(context, "failed_deletion_list.txt", failed_deletions)
 }
 
 suspend fun load_ids(context: Context){
-    val ids = readTextFromFile(context, "assistant_ids.txt").split("\n")
+    var ids: List<String>
+
+    if (file_exists(context, "assistant_ids.txt")){
+        ids = read_text_from_file(context, "assistant_ids.txt").split("\n")
+    } else {
+        throw Exception("No ids to load")
+    }
+
 
     if (assistants.size != ids.size){
         throw java.lang.Exception("Amount of IDs not Equal to Num Assistants")
@@ -255,7 +267,7 @@ suspend fun instantiate_or_connect_swarm(context: Context){
 
     }
 
-    writeTextToFile(context, "assistant_ids.txt", id_file)
+    write_text_to_file(context, "assistant_ids.txt", id_file)
 }
 
 
@@ -323,6 +335,7 @@ class GPT(val assistant_id: String){
                 body = ""
             }
             thread_id = response.id
+
             return response
         } catch (e: ClientRequestException) {
             // Handle error when server responds with client error status (4xx)
@@ -453,4 +466,44 @@ class GPT(val assistant_id: String){
         return response
     }
 
+    suspend fun load_or_create_thread(context: Context){
+        try{
+            if (file_exists(context, "$assistant_id.txt")){
+                thread_id = read_text_from_file(context, "$assistant_id.txt")
+            } else {
+                val thread = this.create_thread()
+                save_thread_to_assistant(context, assistant_id, thread_id)
+            }
+
+
+        } catch (e: Exception){
+            Log.d("Error", e.toString())
+            val thread = this.create_thread()
+            save_thread_to_assistant(context, assistant_id, thread_id)
+        }
+    }
+}
+
+suspend fun select_assistant(prompt: String): AssistantSettings{
+    val chatbot = Chatbot(GPT_MODEL, SELECTOR_SYS_PROMPT)
+    var selection_made = false
+    var ct = 0
+
+    while (!selection_made && ct < 3){
+        val choice = chatbot.say_to_chatbot(prompt)
+        val gai_assistant = assistants.findAssistantByName(choice)
+
+        gai_assistant?.let {  // Found something
+            return gai_assistant
+        } ?: run {  // Found Nothing
+            ct++
+        }
+
+    }
+
+    return assistants[1]  // Use generalist
+}
+
+suspend fun save_thread_to_assistant(context: Context, assistant_id: String, thread_id: String){
+    write_text_to_file(context, "$assistant_id.txt", thread_id)
 }

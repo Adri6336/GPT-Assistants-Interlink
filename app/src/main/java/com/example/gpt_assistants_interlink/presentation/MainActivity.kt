@@ -55,10 +55,19 @@ fun AppContent() {
 
     var buttonText = remember { mutableStateOf("Press to Load") }
     var buttonColor = remember { mutableStateOf(Color.Black) }
+    var buttonTextColor = remember { mutableStateOf(Color.White) }
+
     var ready = remember { mutableStateOf(false) }
-    var gpt = remember {GPT("asst_qroDjVhky67l3wfAq3LnqAxw")}
+    var gpt = remember { mutableStateOf(GPT("asst_qroDjVhky67l3wfAq3LnqAxw"))}
     var main_thread: ThreadObject
     var step = "start"
+    var assistant = remember { mutableStateOf(assistants[1]) }
+    var selected = false
+
+    var screen_locked = remember { mutableStateOf(true) }
+    var setting_up = remember { mutableStateOf(true) }
+    var talking_to_api = remember { mutableStateOf(false) }
+    var setup_presses = remember { mutableStateOf(0) }
 
     val requestPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -70,6 +79,10 @@ fun AppContent() {
                 step = "thread start"
                 buttonColor.value = Color.Blue
                 buttonText.value = "Setting Up Interlink"
+                delay(1500)
+                if (setup_presses.value > 3){
+
+                }
 
                 try{
                     load_ids(context)
@@ -77,9 +90,14 @@ fun AppContent() {
                     instantiate_or_connect_swarm(context)
                 }
 
+
                 buttonText.value = "Ready For Use"
                 buttonColor.value = Color.Black
+                screen_locked.value = false
                 ready.value = true
+
+
+                setting_up.value = false
 
             } catch (e: Exception) {
                 // Handle the exception properly
@@ -99,42 +117,61 @@ fun AppContent() {
         Button(
             onClick = {
                 // TEST
-                if (ready.value){
+                var response = ""
+
+                if (ready.value && !screen_locked.value){
                     // Add code here
                     coroutineScope.launch(Dispatchers.Main) {
                         try{
+                            screen_locked.value = true  // Prevent user from tapping again
 
-                            buttonText.value = "Test IO"
-                            //val data = readTextFromFile(context, "assistant_ids.txt")
-                            //Log.d("IDS", data)
+                            val prompt = "Heyo! :D"
 
-                            //purge_assistants(context)
+                            if (selected){
+                                buttonText.value = "${assistant.value.name} thinking ..."
+                                buttonColor.value = assistant.value.screen_color
+                                buttonTextColor.value = assistant.value.text_color
+                                response = gpt.value.say_to_assistant(prompt)
 
-                            //buttonColor.value = Color.Red
-                            //buttonText.value = "Thinking ..."
-                            //val chatbot = Chatbot("gpt-4-1106-preview", Selector_Sys_Prompt)
-                            //val response = chatbot.say_to_chatbot("What's a derivative?")
-                            //val response = gpt.say_to_assistant("Hello!")
+                            } else {
+                                assistant.value = select_assistant(prompt)
+                                selected = true
+                                gpt.value = GPT(assistant.value.assistant_id)
+                                gpt.value.load_or_create_thread(context)
+
+                                buttonText.value = "${assistant.value.name} thinking ..."
+                                buttonColor.value = assistant.value.screen_color
+                                buttonTextColor.value = assistant.value.text_color
+                                response = gpt.value.say_to_assistant(prompt)
+                            }
+
 
                             buttonColor.value = Color.Black
-                            buttonText.value = "CHEESE :D"
+                            buttonTextColor.value = Color.White
+                            buttonText.value = response
+                            screen_locked.value = false
 
                         } catch (e: Exception){
                             Log.d("Error", e.toString())
                             buttonColor.value = Color.Gray
                             buttonText.value = e.toString()
+                            screen_locked.value = false
                         }
 
                     }
 
 
 
+                } else { // Screen is locked
+                    if (setting_up.value && !talking_to_api.value){
+                        setup_presses.value++
+                    }
                 }
             },
             // Use a custom color scheme for the button
             colors = ButtonDefaults.buttonColors(
                 containerColor = buttonColor.value,
-                contentColor = Color.White
+                contentColor = buttonTextColor.value
             ),
             modifier = Modifier.size(300.dp)
         ) {
