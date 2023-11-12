@@ -9,6 +9,7 @@ import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.Serializable
 
@@ -276,6 +277,22 @@ class GPT(val assistant_id: String){
         }
 
         return latestMessageContent.first().text.value
+    }
+
+    suspend fun say_to_assistant(content: String): String{
+        val message_response = this.create_message(content)
+        val run = this.run_thread()
+
+        var run_state = run.status
+        var ct = 0
+        while (run_state != "completed" && run_state != "expired" && run_state != "failed"){
+            delay(1000)
+            run_state = this.run_status(run)
+            ct++
+        }
+
+        val response = this.get_newest_message()
+        return response
     }
 
 }

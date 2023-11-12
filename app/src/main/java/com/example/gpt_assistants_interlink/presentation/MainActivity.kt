@@ -95,54 +95,26 @@ fun AppContent() {
                 // TEST
                 if (ready.value){
                     // Add code here
-
-
-                } else {
                     coroutineScope.launch(Dispatchers.Main) {
-
                         try{
                             buttonColor.value = Color.Red
-                            buttonText.value = "C=59(F−32)The equation above shows how temperature F, measured in degrees Fahrenheit, relates to a temperature C, measured in degrees Celsius. Based on the equation, which of the following must be true?A temperature increase of 1 degree Fahrenheit is equivalent to a temperature increase of 59 degree Celsius.A temperature increase of 1 degree Celsius is equivalent to a temperature increase of 1.8 degrees Fahrenheit.A temperature increase of 59 degree Fahrenheit is equivalent to a temperature increase of 1 degree Celsius."
-
-                            buttonColor.value = Color.Magenta
                             buttonText.value = "Thinking ..."
-
-                            step = "create message"
-                            val create_message_response = gpt.create_message("C=59(F−32)The equation above shows how temperature F, measured in degrees Fahrenheit, relates to a temperature C, measured in degrees Celsius. Based on the equation, which of the following must be true?A temperature increase of 1 degree Fahrenheit is equivalent to a temperature increase of 59 degree Celsius.A temperature increase of 1 degree Celsius is equivalent to a temperature increase of 1.8 degrees Fahrenheit.A temperature increase of 59 degree Fahrenheit is equivalent to a temperature increase of 1 degree Celsius.")
-
-                            step = "run thread"
-                            val run = gpt.run_thread()
-
-                            step = "get state and check into status"
-                            var run_state = run.status
-                            var ct = 0
-                            while (run_state != "completed" && run_state != "expired" && run_state != "failed"){
-                                delay(1000)
-                                run_state = gpt.run_status(run)
-                                buttonText.value = "Thinking ...\nPolled: $ct times"
-                                ct++
-                            }
-
-                            step = "get new message"
-                            val response = gpt.get_newest_message()
+                            val response = gpt.say_to_assistant("Hello!")
 
                             buttonColor.value = Color.Black
                             buttonText.value = response
-                            ready.value = true
+
                         } catch (e: Exception){
-                            buttonColor.value = Color.Black
-                            buttonText.value = "$step\n${e.toString()}"
-                            Log.d("Error", "$step\n${e.toString()}")
-                            ready.value = true
+                            Log.d("Error", e.toString())
+                            buttonColor.value = Color.Gray
+                            buttonText.value = e.toString()
                         }
 
-
                     }
+
+
+
                 }
-
-
-
-
             },
             // Use a custom color scheme for the button
             colors = ButtonDefaults.buttonColors(
