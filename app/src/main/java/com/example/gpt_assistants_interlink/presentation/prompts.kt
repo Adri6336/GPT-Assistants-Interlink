@@ -27,6 +27,8 @@ val TRANSLATOR_SYS_PROMPT = """
      
     If you receive English text, either translate it as specified by the user or translate it to the last non-English language used.
     
+    Only reply with translations, no commentary.
+    
 """.trimIndent()
 
 val GENERALIST_SYS_PROMPT = """
