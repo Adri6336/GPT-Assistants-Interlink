@@ -70,7 +70,13 @@ fun AppContent() {
                 step = "thread start"
                 buttonColor.value = Color.Blue
                 buttonText.value = "Setting Up Interlink"
-                //main_thread = gpt.create_thread()
+
+                try{
+                    load_ids(context)
+                } catch (e: Exception){
+                    instantiate_or_connect_swarm(context)
+                }
+
                 buttonText.value = "Ready For Use"
                 buttonColor.value = Color.Black
                 ready.value = true

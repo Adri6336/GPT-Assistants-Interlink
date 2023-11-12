@@ -83,6 +83,12 @@ data class ThreadRun(
 )
 
 @Serializable
+data class AssistantList(
+    val `object`: String,
+    val data: List<Assistant>
+)
+
+@Serializable
 data class Assistant(
     val id: String,
     val `object`: String,

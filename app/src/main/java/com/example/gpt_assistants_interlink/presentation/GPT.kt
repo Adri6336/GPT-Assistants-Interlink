@@ -1,5 +1,6 @@
 package com.example.gpt_assistants_interlink.presentation
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.graphics.Color
@@ -21,6 +22,10 @@ val JSONSERIALIZER = GsonSerializer()
 
 
 // Assistant and Chatbot set up
+fun List<Assistant>.findAssistantByName(name: String): Assistant? {
+    return this.find { it.name.contains(name, ignoreCase = true) }
+}
+
 data class Abilities(val interpreter: Boolean, val retrieval: Boolean)
 
 data class AssistantSettings(
@@ -135,58 +140,87 @@ suspend fun create_assistant(instructions: String, name: String,
         return response.id
     } catch (e: ClientRequestException) {
         // Handle error appropriately by rethrowing, logging, or returning an error message
+        Log.d("Error", "CREATE: $e")
         throw e
     } catch (e: ServerResponseException) {
         // Handle server error
+        Log.d("Error", "CREATE: $e")
         throw e
     } catch (e: Exception) {
         // Handle other errors
+        Log.d("Error", "CREATE: $e")
         throw e
     } finally {
         client.close()
     }
 }
 
-suspend fun list_assistants(): List<Assistant> {
-    /*
-    This queries the OpenAI API for a list of your assistants.
-
-    :return: List of Assistant
-     */
-
-    val OPENAI_BASE_URL = "https://api.openai.com/v1/assistants"
-    val CONTENT_TYPE_HEADER = "Content-Type"
-    val AUTHORIZATION_HEADER = "Authorization"
-    val OPENAI_BETA_HEADER = "OpenAI-Beta"
-    val OPENAI_BETA_VALUE = "assistants=v1"
-
+suspend fun list_assistants(): AssistantList{
     val client = HttpClient(Android) {
         install(JsonFeature) {
             serializer = JSONSERIALIZER
         }
-        defaultRequest {
-            header(CONTENT_TYPE_HEADER, "application/json")
-            header(AUTHORIZATION_HEADER, "Bearer $OPENAI_KEY")
-            header(OPENAI_BETA_HEADER, OPENAI_BETA_VALUE)
-        }
     }
 
-    try {
-        // Perform the GET request and receive the response as a list of Assistants
-        return client.get<List<Assistant>>(OPENAI_BASE_URL) {
-            parameter("order", "desc")
-            parameter("limit", 100)
-        }
-    } catch (e: Exception) {
-        // Log and/or handle the error accordingly
-        // For demonstration purposes, we're just printing the error
-        println("Error retrieving assistants: $e")
-        throw e
-    } finally {
-        // Close the client to free resources
-        client.close()
+    val response: AssistantList = client.get("https://api.openai.com/v1/assistants"){
+        header("Content-Type", "application/json")
+        header("Authorization", "Bearer $OPENAI_KEY")
+        header("OpenAI-Beta", "assistants=v1")
     }
+    client.close()
+
+    return response
 }
+
+
+suspend fun load_ids(context: Context){
+    val ids = readTextFromFile(context, "assistant_ids.txt").split("\n")
+
+    if (assistants.size != ids.size){
+        throw java.lang.Exception("Amount of IDs not Equal to Num Assistants")
+    }
+
+    var pos = 0  // This represents your current position in the list of assistants
+    for (setting in assistants){
+        setting.assistant_id = ids[pos]
+        pos++
+    }
+
+}
+suspend fun instantiate_or_connect_swarm(context: Context){
+    val assistant_list = list_assistants().data
+    var id_file = ""  // This is the file that will contain our assistant ids
+
+    for (setting in assistants){
+
+        // 1. Check if we have an assistant already created with OpenAI
+        val gai_assistant = assistant_list.findAssistantByName(setting.name)
+        gai_assistant?.let {
+            // Assistant with the given name found.
+            setting.assistant_id = it.id
+            id_file = "$id_file${it.id}\n"  // Append id to file
+
+        } ?: run {
+            // Assistant with the given name not found.
+            var new_id = ""
+
+            if (GPT_MODEL != "gpt-4-1106-preview"){
+                new_id = create_assistant(setting.sys_prompt, setting.name,
+                    setting.abilities.interpreter, false)  // Only preview version does this
+            } else {
+                new_id = create_assistant(setting.sys_prompt, setting.name,
+                    setting.abilities.interpreter, setting.abilities.retrieval)
+            }
+
+            id_file = "$id_file$new_id\n"  // Append id to file
+
+        }
+
+    }
+
+    writeTextToFile(context, "assistant_ids.txt", id_file)
+}
+
 
 class Chatbot(val model: String, val system_prompt: String){
     // This will be a simple interface to the model
