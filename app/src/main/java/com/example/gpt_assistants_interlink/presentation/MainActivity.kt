@@ -80,14 +80,15 @@ fun AppContent() {
                 buttonColor.value = Color.Blue
                 buttonText.value = "Setting Up Interlink"
                 delay(1500)
-                if (setup_presses.value > 3){
-
-                }
 
                 try{
                     load_ids(context)
                 } catch (e: Exception){
                     instantiate_or_connect_swarm(context)
+                }
+
+                if (setup_presses.value > 3){
+
                 }
 
 
