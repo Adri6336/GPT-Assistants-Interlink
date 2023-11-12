@@ -503,6 +503,16 @@ suspend fun select_assistant(prompt: String): AssistantSettings{
     return assistants[1]  // Use generalist
 }
 
+suspend fun select_assistant_manual(name: String): AssistantSettings{
+    val gai_assistant = assistants.findAssistantByName(name)
+
+    gai_assistant?.let {  // Found something
+        return gai_assistant
+    } ?: run {  // Found Nothing
+        return assistants[1]
+    }
+}
+
 suspend fun save_thread_to_assistant(context: Context, assistant_id: String, thread_id: String){
     write_text_to_file(context, "$assistant_id.txt", thread_id)
 }

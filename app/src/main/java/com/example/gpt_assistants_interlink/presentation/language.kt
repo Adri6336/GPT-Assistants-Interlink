@@ -44,6 +44,7 @@ import java.io.IOException
 import java.util.Locale
 import java.util.UUID
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 // This file is dedicated to the processing of language, and the speaking of it
 val openai_voice = "nova"
@@ -251,11 +252,11 @@ suspend fun use_native_tts(context: Context, text: String,
                            assistant: AssistantSettings,
                            background_color: MutableState<Color>,
                            text_color: MutableState<Color>
-                           ) = suspendCancellableCoroutine<Unit> { continuation ->
-     textToSpeech = TextToSpeech(context) { status ->
-         speaking.value = true
-         set_active_colors(assistant, background_color, text_color)
+) = suspendCancellableCoroutine<Unit> { continuation ->
+    textToSpeech = TextToSpeech(context) { status ->
         if (status != TextToSpeech.ERROR) {
+            set_active_colors(assistant, background_color, text_color)
+            speaking.value = true
             textToSpeech.language = Locale.forLanguageTag(lang)
 
             textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
@@ -264,22 +265,24 @@ suspend fun use_native_tts(context: Context, text: String,
                 }
 
                 override fun onDone(utteranceId: String?) {
-                    // Handle TTS onDone event (optional)
-                    continuation.resume(Unit)
+                    // Set speaking to false and reset colors after speech is done
+                    speaking.value = false
+                    reset_colors(background_color, text_color)
+                    continuation.resume(Unit) // Resume the coroutine after speech is done
                 }
 
                 override fun onError(utteranceId: String?) {
                     // Handle TTS onError event (optional)
-                    continuation.resume(Unit)
+                    speaking.value = false
+                    reset_colors(background_color, text_color)
+                    continuation.resumeWithException(RuntimeException("Error occurred during TTS"))
                 }
             })
 
             textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "utteranceId")
         } else {
-            continuation.resume(Unit)
+            continuation.resumeWithException(RuntimeException("TTS initialization failed"))
         }
-         speaking.value = false
-         reset_colors(background_color, text_color)
     }
 }
 suspend fun use_device_pronounced_tts(text: String, coroutineScope: CoroutineScope,
@@ -290,12 +293,15 @@ suspend fun use_device_pronounced_tts(text: String, coroutineScope: CoroutineSco
                                       text_color: MutableState<Color>){
     identifyLanguage(text) { languageCode ->
         coroutineScope.launch(Dispatchers.Main) {
+            set_active_colors(assistant, background_color, text_color)
             use_native_tts(context, "$text",
                 lang = languageCode,
                 speaking,
                 assistant,
                 background_color,
                 text_color)
+
+            reset_colors(background_color, text_color)
         }
     }
 }

@@ -47,8 +47,44 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            RequestPermissions()
             AppContent()
         }
+    }
+}
+
+@Composable
+fun RequestPermissions() {
+    val context = LocalContext.current
+
+    // Remember launcher for using the new Activity Result API
+    val multiplePermissionsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        // This is a map of permission strings to boolean values indicating whether the permission is granted
+        if (permissions.all { it.value }) {
+            // All permissions are granted
+        } else {
+            // Not all permissions are granted
+        }
+    }
+
+    // Trigger the permissions request dialog
+    val permissionsToRequest = listOf(
+        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+        Manifest.permission.RECORD_AUDIO,
+        Manifest.permission.READ_EXTERNAL_STORAGE,
+        Manifest.permission.VIBRATE
+    )
+
+    val shouldRequestPermissions = permissionsToRequest.any {
+        ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
+    }
+
+    if (shouldRequestPermissions) {
+        multiplePermissionsLauncher.launch(
+            permissionsToRequest.toTypedArray()
+        )
     }
 }
 
@@ -67,7 +103,9 @@ fun AppContent() {
     var main_thread: ThreadObject
     var step = "start"
     var assistant = remember { mutableStateOf(assistants[1]) }
-    var selected = false
+    var selected = remember {
+        mutableStateOf(false)
+    }
 
     var screen_locked = remember { mutableStateOf(true) }
     var setting_up = remember { mutableStateOf(true) }
@@ -78,6 +116,7 @@ fun AppContent() {
         mutableStateOf(true)
     }
     var stop_listening = remember { mutableStateOf(false) }
+    var last_prompt = remember { mutableStateOf("") }
 
     val requestPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -86,25 +125,6 @@ fun AppContent() {
     LaunchedEffect(Unit){
         coroutineScope.launch {
             try {
-
-                if (ContextCompat.checkSelfPermission(context,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
-                    ||
-                    ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED
-                    ||
-                    ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
-                    ||
-                    ContextCompat.checkSelfPermission(context, Manifest.permission.VIBRATE) != PackageManager.PERMISSION_GRANTED
-                ){
-                    requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                    delay(500)
-                    requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    delay(500)
-                    requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
-                    delay(500)
-                    requestPermissionLauncher.launch(Manifest.permission.VIBRATE)
-                }
-
 
                 step = "thread start"
                 buttonColor.value = Color.Blue
@@ -167,6 +187,8 @@ fun AppContent() {
                 {
 
                 var response = ""
+                var switch = false
+                var system_command = false
 
                 if (ready.value && !screen_locked.value && !speaking.value){
                     // START ================
@@ -186,12 +208,81 @@ fun AppContent() {
 
 
                             // PROCESSING ==============
-                            var system_command = false
+                            if (prompt.contains("please connect me", ignoreCase = true) ||
+                                prompt.contains("please connect to", ignoreCase = true) ||
+                                prompt.contains("please connect your", ignoreCase = true)){
+                                system_command = true
+                                last_prompt.value = prompt
+                                var connect_message = ""
+
+                                if (prompt.contains("translat", ignoreCase = true)){
+                                    assistant.value = assistants[0]
+
+                                } else if (prompt.contains("generalist", ignoreCase = true)){
+                                    assistant.value = assistants[1]
+
+                                } else if (prompt.contains("engineer", ignoreCase = true)){
+                                    assistant.value = assistants[2]
+
+                                } else if (prompt.contains("friend", ignoreCase = true)){
+                                    assistant.value = assistants[3]
+
+                                } else if (prompt.contains("advisor", ignoreCase = true)){
+                                    assistant.value = assistants[4]
+
+                                } else if (prompt.contains("math", ignoreCase = true)){
+                                    assistant.value = assistants[5]
+
+                                } else if (prompt.contains("scientist", ignoreCase = true)){
+                                    assistant.value = assistants[6]
+
+                                } else if (prompt.contains("psych", ignoreCase = true) ||
+                                           prompt.contains("coach", ignoreCase = true)){
+                                    assistant.value = assistants[7]
+
+                                } else {
+                                    assistant.value = select_assistant(prompt)  // Use language model if uncertain
+                                }
+
+
+                                selected.value = true
+
+                                gpt.value = GPT(assistant.value.assistant_id)
+                                gpt.value.load_or_create_thread(context)
+                                connect_message = "Connected to ${assistant.value.name}"
+                                buttonText.value = connect_message
+                                use_device_pronounced_tts(connect_message, coroutineScope,
+                                    context, speaking,
+                                    assistant.value, buttonColor,
+                                    buttonTextColor)
+
+
+                            } else if (prompt.contains("please reboot system")){
+                                last_prompt.value = prompt
+                                system_command = true
+                                screen_locked.value = true
+                                buttonText.value = "Purging Assistants ..."
+
+                                use_device_pronounced_tts("Purging assistants ...", coroutineScope,
+                                    context, speaking,
+                                    assistant.value, buttonColor,
+                                    buttonTextColor)
+
+                                purge_assistants(context)
+                                instantiate_or_connect_swarm(context)
+                                screen_locked.value = false
+                                buttonText.value = "Completed purge"
+
+                            } else if (prompt.contains("please display last message", ignoreCase = true)){
+                                system_command = true
+                                buttonText.value = last_prompt.value
+                                buttonColor.value = Color.Black
+                            }
 
                             // Enter command processing code here
-
                             if (!system_command){  // Only process non-commands
-                                if (selected){  // Thread already loaded
+                                last_prompt.value = prompt
+                                if (selected.value){  // Thread already loaded
                                     buttonText.value = "${assistant.value.name} thinking ..."
                                     buttonColor.value = Color.Red
                                     buttonTextColor.value = Color.White
@@ -202,42 +293,50 @@ fun AppContent() {
 
                                 } else {  // Load a new thread
                                     assistant.value = select_assistant(prompt)
-                                    selected = true
+                                    selected.value = true
                                     gpt.value = GPT(assistant.value.assistant_id)
                                     gpt.value.load_or_create_thread(context)
 
                                     buttonText.value = "${assistant.value.name} thinking ..."
                                     buttonColor.value = Color.Red
                                     buttonTextColor.value = Color.White
-                                    if (!moderate(prompt)){
+                                    if (!switch && !moderate(prompt)){
                                         response = gpt.value.say_to_assistant(prompt)
                                     }
                                 }
+
+                                if (!switch){
+                                    val summary_bot = Chatbot(GPT_MODEL, SUMMARY_SYS_PROMPT)
+                                    val summary = summary_bot.say_to_chatbot(response, 4095)
+
+                                    if (assistant.value.name != "GAI-translator"){
+                                        buttonText.value = summary
+                                    } else {
+                                        buttonText.value = response
+                                    }
+                                } else {
+                                    buttonText.value = "Connected to ${assistant.value.name}."
+                                    response = "Connected to ${assistant.value.name}."
+                                    switch = false
+                                }
+
+
+                                // Process TTS ============
+                                if (!openai_tts.value){
+                                    use_device_pronounced_tts(response, coroutineScope,
+                                        context, speaking,
+                                        assistant.value, buttonColor,
+                                        buttonTextColor)
+                                } else {
+                                    use_openai_tts(context, response,
+                                        speaking,
+                                        assistant.value,
+                                        buttonColor,
+                                        buttonTextColor)
+                                }
                             }
 
-                            val summary_bot = Chatbot(GPT_MODEL, SUMMARY_SYS_PROMPT)
-                            val summary = summary_bot.say_to_chatbot(response, 4095)
-
-                            if (assistant.value.name != "GAI-translator"){
-                                buttonText.value = summary
-                            } else {
-                                buttonText.value = response
-                            }
-
-                            // Process TTS ============
-
-                            if (!openai_tts.value){
-                                use_device_pronounced_tts(response, coroutineScope,
-                                    context, speaking,
-                                    assistant.value, buttonColor,
-                                    buttonTextColor)
-                            } else {
-                                use_openai_tts(context, response,
-                                    speaking,
-                                    assistant.value,
-                                    buttonColor,
-                                    buttonTextColor)
-                            }
+                            system_command = false
                             screen_locked.value = false
 
                         } catch (e: Exception){
@@ -246,9 +345,7 @@ fun AppContent() {
                             buttonText.value = e.toString()
                             screen_locked.value = false
                         }
-
                     }
-
 
                 } else { // Screen is locked
                     if (setting_up.value && !talking_to_api.value){
