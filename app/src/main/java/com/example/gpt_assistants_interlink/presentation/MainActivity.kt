@@ -13,6 +13,7 @@ import android.os.Bundle
 import android.os.VibrationEffect
 import android.util.Log
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -35,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import com.example.gpt_assistants_interlink.presentation.theme.GPTAssistantsInterlinkTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -47,29 +49,42 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            RequestPermissions()
-            AppContent()
+            GPTAssistantsInterlinkTheme {
+                MainContent()
+            }
         }
     }
 }
 
 @Composable
-fun RequestPermissions() {
+fun MainContent() {
     val context = LocalContext.current
 
-    // Remember launcher for using the new Activity Result API
-    val multiplePermissionsLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        // This is a map of permission strings to boolean values indicating whether the permission is granted
-        if (permissions.all { it.value }) {
-            // All permissions are granted
-        } else {
-            // Not all permissions are granted
+    RequestPermissions(
+        onAllPermissionsGranted = {
+            // All Permissions are granted,
+            // Proceed with displaying your main content or navigation.
+        },
+        onNotAllPermissionsGranted = {
+            // Not all Permissions are granted,
+            // Show a message to the user or take appropriate action.
+            Toast.makeText(
+                context,
+                "Not all permissions granted. The app may not work as intended.",
+                Toast.LENGTH_LONG
+            ).show()
         }
-    }
+    )
 
-    // Trigger the permissions request dialog
+    AppContent() // Your main app composable goes here, it will display the rest of the UI.
+}
+
+@Composable
+fun RequestPermissions(
+    onAllPermissionsGranted: () -> Unit,
+    onNotAllPermissionsGranted: () -> Unit
+) {
+    val context = LocalContext.current
     val permissionsToRequest = listOf(
         Manifest.permission.WRITE_EXTERNAL_STORAGE,
         Manifest.permission.RECORD_AUDIO,
@@ -77,14 +92,30 @@ fun RequestPermissions() {
         Manifest.permission.VIBRATE
     )
 
-    val shouldRequestPermissions = permissionsToRequest.any {
-        ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
+    // Always remember the launcher
+    val multiplePermissionsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        // Check if all permissions are granted
+        if (permissions.all { it.value }) {
+            onAllPermissionsGranted()
+        } else {
+            onNotAllPermissionsGranted()
+        }
     }
 
-    if (shouldRequestPermissions) {
-        multiplePermissionsLauncher.launch(
-            permissionsToRequest.toTypedArray()
-        )
+    // In Compose, effects such as LaunchedEffect are used to handle lifecycle events like launching the permissions request.
+    // permissionsToRequest.any() should be used as the key to re-launch the permissions request when needed.
+    LaunchedEffect(key1 = permissionsToRequest.any {
+        ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
+    }) {
+        // Only launch the permission request if needed
+        if (permissionsToRequest.any {
+                ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED }) {
+            multiplePermissionsLauncher.launch(
+                permissionsToRequest.toTypedArray()
+            )
+        }
     }
 }
 
