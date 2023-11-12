@@ -1,10 +1,27 @@
 package com.example.gpt_assistants_interlink.presentation
 
 import com.google.gson.annotations.SerializedName
+import io.ktor.client.features.json.GsonSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
+
+val JSONSERIALIZER = GsonSerializer()
+
+@Serializable
+data class ModerationResponse(
+    val id: String,
+    val model: String,
+    val results: List<Flagged>)
+
+@Serializable
+data class ModerationPayload(
+    val input: String
+)
+
+@Serializable
+data class Flagged(val flagged: Boolean)
 
 @Serializable
 data class Message(val role: String, val content: String)

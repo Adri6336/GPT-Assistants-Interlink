@@ -1,30 +1,48 @@
 package com.example.gpt_assistants_interlink.presentation
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.media.MediaPlayer
+import android.media.MediaRecorder
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.graphics.Color
+import androidx.core.content.ContextCompat
 import androidx.wear.tiles.material.ButtonColors
 import com.google.mlkit.nl.languageid.LanguageIdentification
 import com.google.mlkit.nl.languageid.LanguageIdentifier
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
+import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.readBytes
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.Response
+import org.json.JSONObject
 import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
 import java.util.Locale
+import java.util.UUID
 import kotlin.coroutines.resume
 
 // This file is dedicated to the processing of language, and the speaking of it
@@ -32,6 +50,110 @@ val openai_voice = "nova"
 private lateinit var textToSpeech: TextToSpeech
 
 
+// Speech to Text Functions
+// Transferred from old project because it works. They are probably not pretty.
+
+suspend fun moderate(content: String): Boolean {
+    val client = HttpClient(Android) {
+        install(JsonFeature) {
+            serializer = JSONSERIALIZER
+        }
+    }
+
+    val response: ModerationResponse = client.post("https://api.openai.com/v1/moderations") {
+        header("Content-Type", "application/json")
+        header("Authorization", "Bearer $OPENAI_KEY")
+        contentType(ContentType.Application.Json)
+        body = ModerationPayload(content)
+    }
+
+    client.close()
+    return response.results.first().flagged
+}
+
+suspend fun recordAudioAndTranscribe(context: Context,
+                                     stop: MutableState<Boolean>,
+                                     textContent: MutableState<String>): String? {
+
+    textContent.value = "Listening ..."
+
+    if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED
+        || ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+    ) {
+        return null
+    }
+
+    val audioFileName = "${context.externalCacheDir?.absolutePath}/audio_${UUID.randomUUID()}.m4a"
+    val mediaRecorder = MediaRecorder().apply {
+        setAudioSource(MediaRecorder.AudioSource.MIC)
+        setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+        setOutputFile(audioFileName)
+        setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+    }
+
+    try {
+        mediaRecorder.prepare()
+    } catch (e: IOException) {
+        return null
+    }
+
+    mediaRecorder.start()
+
+    // Listen for a time
+    while (!stop.value){
+        kotlinx.coroutines.delay(1)
+    }
+    textContent.value = "Processing ..."
+    stop.value = false  // Reset after finished
+
+    mediaRecorder.stop()
+    mediaRecorder.release()
+
+    val file = File(audioFileName)
+    val fileInputStream = FileInputStream(file)
+    val requestBody = file.asRequestBody("audio/*".toMediaTypeOrNull())
+
+    val multipartBody = MultipartBody.Builder()
+        .setType(MultipartBody.FORM)
+        .addFormDataPart("file", file.name, requestBody)
+        .addFormDataPart("model", "whisper-1")
+        .build()
+
+    val request = Request.Builder()
+        .url("https://api.openai.com/v1/audio/transcriptions")
+        .header("Authorization", "Bearer $OPENAI_KEY")
+        .post(multipartBody)
+        .build()
+
+    val client = OkHttpClient()
+
+    var response: Response? = null
+    var attempts = 0
+
+    while (response == null && attempts < 3) {
+        try {
+            response = withTimeout(10_000L) {
+                withContext(Dispatchers.IO) { client.newCall(request).execute() }
+            }
+        } catch (e: Throwable) {
+            attempts++
+            if (attempts >= 3) {
+                throw e
+            }
+        }
+    }
+
+    val result = response?.body?.string()
+
+    // Delete the audio file
+    file.delete()
+
+    // Parse the JSON response to extract the transcribed text
+    val jsonObject = JSONObject(result)
+    return jsonObject.getString("text")
+}
+
+// Text To Speech Functions =======================
 suspend fun identifyLanguage(text: String, onComplete: (String) -> Unit) {
     try {
         val languageIdentifier: LanguageIdentifier = LanguageIdentification.getClient()
@@ -52,7 +174,6 @@ suspend fun identifyLanguage(text: String, onComplete: (String) -> Unit) {
     }
 }
 
-// Generate Speech
 suspend fun use_openai_tts(
     context: Context,
     inputText: String,

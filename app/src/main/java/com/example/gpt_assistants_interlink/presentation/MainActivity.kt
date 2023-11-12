@@ -6,6 +6,8 @@
 
 package com.example.gpt_assistants_interlink.presentation
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.view.WindowManager
@@ -30,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -72,6 +75,7 @@ fun AppContent() {
     var openai_tts = remember {
         mutableStateOf(true)
     }
+    var stop_listening = remember { mutableStateOf(false) }
 
     val requestPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -80,6 +84,11 @@ fun AppContent() {
     LaunchedEffect(Unit){
         coroutineScope.launch {
             try {
+                requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+                requestPermissionLauncher.launch(Manifest.permission.VIBRATE)
+
                 step = "thread start"
                 buttonColor.value = Color.Blue
                 buttonText.value = "Setting Up Interlink"
@@ -124,41 +133,67 @@ fun AppContent() {
     ) {
         Button(
             onClick = {
+                if (ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    ) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.RECORD_AUDIO
+                    ) == PackageManager.PERMISSION_GRANTED
+                )
+                {
+
                 var response = ""
 
                 if (ready.value && !screen_locked.value && !speaking.value){
                     // START ================
-                    coroutineScope.launch(Dispatchers.Main) {
+                    coroutineScope.launch {
                         try{
                             screen_locked.value = true  // Prevent user from tapping again
 
                             // RECORD AND MODERATE ==============
+                            buttonColor.value = Color.Blue
+                            var prompt = recordAudioAndTranscribe(context, stop_listening,
+                            buttonText).toString()  // This is voodoo. How does it work? Magic
+                            /*
+                            Legit this is a copy-paste function I made a long time ago. I've spent some time trying
+                            to understand how it works in relation to everything else (tap to record and tap to stop)
+                            but I've come up empty. It may be that I'm tired af tho lol
+                             */
 
-                            val prompt = "Heyo! :D"  // Recording simulation
 
                             // PROCESSING ==============
+                            var system_command = false
 
-                            if (selected){  // Thread already loaded
-                                buttonText.value = "${assistant.value.name} thinking ..."
-                                buttonColor.value = Color.Red
-                                buttonTextColor.value = Color.White
-                                response = gpt.value.say_to_assistant(prompt)
+                            // Enter command processing code here
 
-                            } else {  // Load a new thread
-                                assistant.value = select_assistant(prompt)
-                                selected = true
-                                gpt.value = GPT(assistant.value.assistant_id)
-                                gpt.value.load_or_create_thread(context)
+                            if (!system_command){  // Only process non-commands
+                                if (selected){  // Thread already loaded
+                                    buttonText.value = "${assistant.value.name} thinking ..."
+                                    buttonColor.value = Color.Red
+                                    buttonTextColor.value = Color.White
+                                    if (!moderate(prompt)){
+                                        response = gpt.value.say_to_assistant(prompt)
+                                    }
 
-                                buttonText.value = "${assistant.value.name} thinking ..."
-                                buttonColor.value = Color.Red
-                                buttonTextColor.value = Color.White
-                                response = gpt.value.say_to_assistant(prompt)
+
+                                } else {  // Load a new thread
+                                    assistant.value = select_assistant(prompt)
+                                    selected = true
+                                    gpt.value = GPT(assistant.value.assistant_id)
+                                    gpt.value.load_or_create_thread(context)
+
+                                    buttonText.value = "${assistant.value.name} thinking ..."
+                                    buttonColor.value = Color.Red
+                                    buttonTextColor.value = Color.White
+                                    if (!moderate(prompt)){
+                                        response = gpt.value.say_to_assistant(prompt)
+                                    }
+                                }
                             }
 
-
                             buttonText.value = response
-
 
                             // Process TTS ============
 
@@ -190,8 +225,10 @@ fun AppContent() {
                     if (setting_up.value && !talking_to_api.value){
                         setup_presses.value++
                     }
+
+                    stop_listening.value = true
                 }
-            },
+            }},
             // Use a custom color scheme for the button
             colors = ButtonDefaults.buttonColors(
                 containerColor = buttonColor.value,
