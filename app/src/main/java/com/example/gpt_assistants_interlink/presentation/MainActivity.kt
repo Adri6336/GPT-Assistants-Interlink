@@ -70,7 +70,7 @@ fun AppContent() {
                 step = "thread start"
                 buttonColor.value = Color.Blue
                 buttonText.value = "Setting Up Interlink"
-                main_thread = gpt.create_thread()
+                //main_thread = gpt.create_thread()
                 buttonText.value = "Ready For Use"
                 buttonColor.value = Color.Black
                 ready.value = true
@@ -97,14 +97,21 @@ fun AppContent() {
                     // Add code here
                     coroutineScope.launch(Dispatchers.Main) {
                         try{
-                            buttonColor.value = Color.Red
-                            buttonText.value = "Thinking ..."
-                            val chatbot = Chatbot("gpt-4-1106-preview", Selector_Sys_Prompt)
-                            val response = chatbot.say_to_chatbot("What's a derivative?")
+
+                            buttonText.value = "Test IO"
+                            writeTextToFile(context, "testfile.txt", "THIS IS A TESSST :D")
+                            val data = readTextFromFile(context, "testfile.txt")
+
+
+
+                            //buttonColor.value = Color.Red
+                            //buttonText.value = "Thinking ..."
+                            //val chatbot = Chatbot("gpt-4-1106-preview", Selector_Sys_Prompt)
+                            //val response = chatbot.say_to_chatbot("What's a derivative?")
                             //val response = gpt.say_to_assistant("Hello!")
 
                             buttonColor.value = Color.Black
-                            buttonText.value = response
+                            buttonText.value = data
 
                         } catch (e: Exception){
                             Log.d("Error", e.toString())
