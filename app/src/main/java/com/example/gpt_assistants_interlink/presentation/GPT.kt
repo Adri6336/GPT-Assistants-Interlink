@@ -1,6 +1,7 @@
 package com.example.gpt_assistants_interlink.presentation
 
 import android.util.Log
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.graphics.Color
 import io.ktor.client.*
 import io.ktor.client.engine.android.*
@@ -38,49 +39,57 @@ val assistants = listOf<AssistantSettings>(
         Color(51, 204, 255),
         Color(0, 0, 0),
         TRANSLATOR_SYS_PROMPT,
-        Abilities(false, false)),
+        Abilities(false, false)
+    ),
 
     AssistantSettings("GAI-generalist", "",
         Color(255, 153, 51),
         Color(0, 0, 0),
         GENERALIST_SYS_PROMPT,
-        Abilities(true, true)),
+        Abilities(true, true)
+    ),
 
     AssistantSettings("GAI-engineer/mechanic", "",
         Color(153, 153, 102),
         Color(0, 0, 0),
         ENGINEER_SYS_PROMPT,
-        Abilities(true, true)),
+        Abilities(true, true)
+    ),
 
     AssistantSettings("GAI-friend", "",
         Color(153, 153, 255),
         Color(0, 0, 0),
         FRIEND_SYS_PROMPT,
-        Abilities(false, false)),
+        Abilities(false, false)
+    ),
 
     AssistantSettings("GAI-advisor", "",
         Color(102, 102, 153),
         Color(255, 255, 255),
         ADVISOR_SYS_PROMPT,
-        Abilities(true, false)),
+        Abilities(true, false)
+    ),
 
     AssistantSettings("GAI-maths/accounting", "",
         Color(0, 102, 204),
         Color(255, 255, 255),
         MATHEMATICIAN_SYS_PROMPT,
-        Abilities(true, true)),
+        Abilities(true, true)
+    ),
 
     AssistantSettings("GAI-scientist/physicist", "",
         Color(0, 153, 51),
         Color(0, 0, 0),
         SCIENTIST_SYS_PROMPT,
-        Abilities(true, true)),
+        Abilities(true, true)
+    ),
 
     AssistantSettings("GAI-life_coach/psychiatrist", "",
         Color(255, 102, 153),
         Color(0, 0, 0),
         PSYCHIATRIST_SYS_PROMPT,
-        Abilities(true, true))
+        Abilities(true, true)
+    )
 )
 
 suspend fun create_assistant(instructions: String, name: String,
