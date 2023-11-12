@@ -68,6 +68,10 @@ fun AppContent() {
     var setting_up = remember { mutableStateOf(true) }
     var talking_to_api = remember { mutableStateOf(false) }
     var setup_presses = remember { mutableStateOf(0) }
+    var speaking = remember { mutableStateOf(false) }
+    var openai_tts = remember {
+        mutableStateOf(true)
+    }
 
     val requestPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -81,6 +85,9 @@ fun AppContent() {
                 buttonText.value = "Setting Up Interlink"
                 delay(1500)
 
+                setup_tts_file(context)
+                openai_tts.value = openai_tts_is_method(context)
+
                 try{
                     load_ids(context)
                 } catch (e: Exception){
@@ -88,7 +95,7 @@ fun AppContent() {
                 }
 
                 if (setup_presses.value > 3){
-
+                    openai_tts.value = toggle_tts(context)
                 }
 
 
@@ -117,39 +124,56 @@ fun AppContent() {
     ) {
         Button(
             onClick = {
-                // TEST
                 var response = ""
 
-                if (ready.value && !screen_locked.value){
-                    // Add code here
+                if (ready.value && !screen_locked.value && !speaking.value){
+                    // START ================
                     coroutineScope.launch(Dispatchers.Main) {
                         try{
                             screen_locked.value = true  // Prevent user from tapping again
 
-                            val prompt = "Heyo! :D"
+                            // RECORD AND MODERATE ==============
 
-                            if (selected){
+                            val prompt = "Heyo! :D"  // Recording simulation
+
+                            // PROCESSING ==============
+
+                            if (selected){  // Thread already loaded
                                 buttonText.value = "${assistant.value.name} thinking ..."
-                                buttonColor.value = assistant.value.screen_color
-                                buttonTextColor.value = assistant.value.text_color
+                                buttonColor.value = Color.Red
+                                buttonTextColor.value = Color.White
                                 response = gpt.value.say_to_assistant(prompt)
 
-                            } else {
+                            } else {  // Load a new thread
                                 assistant.value = select_assistant(prompt)
                                 selected = true
                                 gpt.value = GPT(assistant.value.assistant_id)
                                 gpt.value.load_or_create_thread(context)
 
                                 buttonText.value = "${assistant.value.name} thinking ..."
-                                buttonColor.value = assistant.value.screen_color
-                                buttonTextColor.value = assistant.value.text_color
+                                buttonColor.value = Color.Red
+                                buttonTextColor.value = Color.White
                                 response = gpt.value.say_to_assistant(prompt)
                             }
 
 
-                            buttonColor.value = Color.Black
-                            buttonTextColor.value = Color.White
                             buttonText.value = response
+
+
+                            // Process TTS ============
+
+                            if (!openai_tts.value){
+                                use_device_pronounced_tts(response, coroutineScope,
+                                    context, speaking,
+                                    assistant.value, buttonColor,
+                                    buttonTextColor)
+                            } else {
+                                use_openai_tts(context, response,
+                                    speaking,
+                                    assistant.value,
+                                    buttonColor,
+                                    buttonTextColor)
+                            }
                             screen_locked.value = false
 
                         } catch (e: Exception){
@@ -160,7 +184,6 @@ fun AppContent() {
                         }
 
                     }
-
 
 
                 } else { // Screen is locked
