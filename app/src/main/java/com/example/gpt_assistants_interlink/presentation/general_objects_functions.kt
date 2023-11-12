@@ -1,7 +1,6 @@
 package com.example.gpt_assistants_interlink.presentation
 
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import android.content.Context
 import android.os.Build
