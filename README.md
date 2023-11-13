@@ -11,7 +11,7 @@ You send a message to the interlink and it routes you to the assistant specialis
 
 The following specialists are availible to communicate with through GPT-Assistants-Interlink:
 
-- GAI-translator: handles translating non-english content into english and the translation of english into other languages.
+- GAI-translator: handles translating non-english content into english and the automatic translation of english into the last used non-english language.
     
 - GAI-generalist: handles whatever isn't appropriate for the other specialists.
 
