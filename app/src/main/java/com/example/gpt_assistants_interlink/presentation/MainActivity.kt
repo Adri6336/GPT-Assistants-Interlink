@@ -130,7 +130,7 @@ fun AppContent() {
     var buttonTextColor = remember { mutableStateOf(Color.White) }
 
     var ready = remember { mutableStateOf(false) }
-    var gpt = remember { mutableStateOf(GPT("asst_qroDjVhky67l3wfAq3LnqAxw"))}
+    var gpt = remember { mutableStateOf(GPT("asst_qroDjVhky67l3wfAq3LnqAxw"))}  // Old long since deleted assistant_id
     var main_thread: ThreadObject
     var step = "start"
     var assistant = remember { mutableStateOf(assistants[1]) }
@@ -160,10 +160,10 @@ fun AppContent() {
                 step = "thread start"
                 buttonColor.value = Color.Blue
                 buttonText.value = "Setting Up Interlink"
-                delay(1500)
 
                 setup_tts_file(context)
                 openai_tts.value = openai_tts_is_method(context)
+                delay(1500)
 
                 try{
                     load_ids(context)
@@ -171,12 +171,8 @@ fun AppContent() {
                     instantiate_or_connect_swarm(context)
                 }
 
-                if (setup_presses.value > 3){
-                    openai_tts.value = toggle_tts(context)
-                }
 
-
-                buttonText.value = "Ready For Use"
+                buttonText.value = "Ready For Use\nTap to Begin"
                 buttonColor.value = Color.Black
                 screen_locked.value = false
                 ready.value = true
@@ -212,7 +208,7 @@ fun AppContent() {
                     ) == PackageManager.PERMISSION_GRANTED &&
                     ContextCompat.checkSelfPermission(context,
                         Manifest.permission.READ_EXTERNAL_STORAGE)
-                    == PackageManager.PERMISSION_GRANTED
+                    == PackageManager.PERMISSION_GRANTED && !setting_up.value
                 )
 
                 {
@@ -221,7 +217,7 @@ fun AppContent() {
                 var switch = false
                 var system_command = false
 
-                if (ready.value && !screen_locked.value && !speaking.value){
+                if (ready.value && !screen_locked.value && !speaking.value && !setting_up.value){
                     // START ================
                     coroutineScope.launch {
                         try{
@@ -335,6 +331,13 @@ fun AppContent() {
                                 buttonColor.value = Color.Black
                                 buttonText.value = "All memory wiped"
                                 vibrateWatch(context)
+
+                            } else if (prompt.contains("please toggle TTS", ignoreCase = true) ||
+                                        prompt.contains("please toggle text to speech", ignoreCase = true) ||
+                                        prompt.contains("please toggle t-t-s", ignoreCase = true)){
+                                openai_tts.value = toggle_tts(context)
+                                buttonColor.value = Color.Black
+                                buttonText.value = "TTS Toggled"
                             }
 
                             // Enter command processing code here
