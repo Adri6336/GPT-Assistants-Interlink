@@ -130,7 +130,7 @@ fun AppContent() {
     var buttonTextColor = remember { mutableStateOf(Color.White) }
 
     var ready = remember { mutableStateOf(false) }
-    var gpt = remember { mutableStateOf(GPT("asst_qroDjVhky67l3wfAq3LnqAxw"))}  // Old long since deleted assistant_id
+    var gpt = remember { mutableStateOf(GPT(""))}  
     var main_thread: ThreadObject
     var step = "start"
     var assistant = remember { mutableStateOf(assistants[1]) }
