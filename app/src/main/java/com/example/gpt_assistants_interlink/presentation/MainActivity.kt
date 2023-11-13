@@ -157,13 +157,11 @@ fun AppContent() {
         coroutineScope.launch {
             try {
 
-                step = "thread start"
                 buttonColor.value = Color.Blue
                 buttonText.value = "Setting Up Interlink"
 
                 setup_tts_file(context)
                 openai_tts.value = openai_tts_is_method(context)
-                delay(1500)
 
                 try{
                     load_ids(context)
