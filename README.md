@@ -2,7 +2,7 @@
 
 Welcome to GPT-Assistants-Interlink, a mobile assistant tool optimized for your Android smartwatch. This application is engineered to enhance your daily life by providing responsive virtual assistance and companionship on the fly, using a suite of specialized AI instances tailored for various tasks.
 
-Optimized performance on the Ticwatch Pro 3 Ultra.
+Optimized for the Ticwatch Pro 3 Ultra.
 
 ## Overview
 
