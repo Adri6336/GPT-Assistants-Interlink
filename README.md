@@ -9,6 +9,8 @@ Designed to work best on Ticwatch Pro 3 Ultra.
 
 You send a message to the interlink and it routes you to the assistant specialist that would best respond to your message. These specialist assistants are created by the app on first startup, and recalled if memory is lost. By default, all assistants that are expected to make use of code interpreter well will have it enabled for them.
 
+Once you've been routed to an assistant, your conversation will continue with them regardless of what you say unless you specifically request to be connected to a different instance.
+
 The following specialists are availible to communicate with through GPT-Assistants-Interlink:
 
 - GAI-translator: handles translating non-english content into english and the automatic translation of english into the last used non-english language.
