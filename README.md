@@ -45,3 +45,7 @@ If desired, the user can manually specify which bot they want to speak with.
 2. Modify the [GPT.kt](https://github.com/Adri6336/GPT-Assistants-Interlink/blob/main/app/src/main/java/com/example/gpt_assistants_interlink/presentation/GPT.kt) file to have your API key as the OPENAI_KEY constant at the top of the file.
 3. Open project in Android Studio and build APK.
 4. Locate APK and use adb to install on your watch (make sure the watch has developer options enabled)
+
+# Customization After Installation
+
+You can manipulate the assistants from your OpenAI playground, changing the model, prompt, and adding features as desired. As long as you do not request deletion in the app, these should persist. 
