@@ -5,7 +5,9 @@ Designed to work best on Ticwatch Pro 3 Ultra.
 
 # Concept
 
-You send a message to the interlink and it routes you to the assistant specialist that would best respond to your message. These specialist assistants are created by the app on first startup, and recalled if memory is lost. By default, all assistants that can make use of code interpreter well will have it enabled for them.
+![screen](https://github.com/Adri6336/GPT-Assistants-Interlink/assets/64619524/7b568a19-10f3-4b60-969e-40df65517c8e)
+
+You send a message to the interlink and it routes you to the assistant specialist that would best respond to your message. These specialist assistants are created by the app on first startup, and recalled if memory is lost. By default, all assistants that are expected to make use of code interpreter well will have it enabled for them.
 
 The following specialists are availible to communicate with through GPT-Assistants-Interlink:
 
@@ -34,6 +36,7 @@ If desired, the user can manually specify which bot they want to speak with.
 - "please display last message": this shows the message you sent to the bot previously.
 - "please clear memory": this will start a new conversation thread, effectively wiping the assistant's memory.
 - "please clear all memory": this will wipe all asisstants' memory.
+- "please toggle text to speech": this will toggle betweeen OpenAI's TTS and the on-device TTS. OpenAI is used by default.
 
 
 # Installation
