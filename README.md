@@ -5,7 +5,7 @@ Designed to work best on Ticwatch Pro 3 Ultra.
 
 # Concept
 
-![screen](https://github.com/Adri6336/GPT-Assistants-Interlink/assets/64619524/7b568a19-10f3-4b60-969e-40df65517c8e)
+![screen](https://github.com/Adri6336/GPT-Assistants-Interlink/assets/64619524/78d1c782-f47e-41c4-8b3f-3e77bfb0af59)
 
 You send a message to the interlink and it routes you to the assistant specialist that would best respond to your message. These specialist assistants are created by the app on first startup, and recalled if memory is lost. By default, all assistants that are expected to make use of code interpreter well will have it enabled for them.
 
