@@ -1,51 +1,59 @@
 # GPT-Assistants-Interlink
-This is a mobile assistant tool for your Android smart-watch designed to augment your abilities on the go and provide virtual companionship through the use of specialized instances. 
 
-Designed to work best on Ticwatch Pro 3 Ultra.
+GPT-Assistants-Interlink is a mobile assistant app optimized for your Android smartwatch that takes advantage of OpenAI's API, using its Assistants, Whisper, Chat, and TTS tools to empower your device. This application is engineered to enhance your daily life by providing responsive virtual assistance and companionship on the fly, using a suite of specialized AI instances tailored for various tasks.
 
-# Concept
+Optimized for the Ticwatch Pro 3 Ultra.
 
-![screen](https://github.com/Adri6336/GPT-Assistants-Interlink/assets/64619524/7b568a19-10f3-4b60-969e-40df65517c8e)
+## Overview
 
-You send a message to the interlink and it routes you to the assistant specialist that would best respond to your message. These specialist assistants are created by the app on first startup, and recalled if memory is lost. By default, all assistants that are expected to make use of code interpreter well will have it enabled for them.
+The application empowers your smartwatch by enabling easy access to a range of specialist AI assistants designed to address your needs effectively. With a simple message to the interlink, it intelligently connects you to the most suitable assistant based on your query.
 
-The following specialists are availible to communicate with through GPT-Assistants-Interlink:
+![GPT-Assistants-Interlink Interface](https://github.com/Adri6336/GPT-Assistants-Interlink/assets/64619524/78d1c782-f47e-41c4-8b3f-3e77bfb0af59)
 
-- GAI-translator: handles translating non-english content into english and the automatic translation of english into the last used non-english language.
-    
-- GAI-generalist: handles whatever isn't appropriate for the other specialists.
+Upon initiation, the app generates an array of specialist assistants, which are automatically regenerated in case of memory loss. Code interpreter functionality is available for assistants requiring it.
 
-- GAI-engineer/mechanic: deals with devices, machines, and tools.
+Conversations flow seamlessly with your chosen assistant and switch only on explicit requests to connect with a different specialist.
 
-- GAI-friend: responds to a user talking for talking's sake, such as when describing something they're proud up or seeking a general conversation. This assistant acts like their virtual friend.
+### Specialists Available
 
-- GAI-advisor: this bot provides concrete, wise, and realistic advice to complex situations with the aim of bettering the standing of the user.
+- **GAI-translator**: Specializes in translating content between English and other languages or vice versa.
+  
+- **GAI-generalist**: A jack-of-all-trades assistant for general inquiries.
 
-- GAI-maths/accounting: this bot solves problems related to maths, finance, and related subjects.
+- **GAI-engineer/mechanic**: Dedicated to topics concerning devices, machinery, and tools.
 
-- GAI-scientist/physicist: this bot engages with the user on science or physics-related questions.
+- **GAI-friend**: Offers companionship and casual conversation for users seeking social interaction.
 
-- GAI-life_coach/psychiatrist: this bot is aimed at improving the mental well being of the user, helping the user make progress to attain greater fulfillment in life, provides advice related to interpersonal relationships, uses psychiatric techniques to help the user, and works the user through stressful or emotionally complex situations.
+- **GAI-advisor**: Provides pragmatic and sage advice on complex matters to enhance the user's well-being.
 
-If desired, the user can manually specify which bot they want to speak with.
+- **GAI-maths/accounting**: Assists with mathematical and financial computations or queries.
 
-# Voice Commands
+- **GAI-scientist/physicist**: Engages users with discussions or questions related to science and physics.
 
-- "please connect to a/an {specialist}": This will route you to an appropriate assistant. If you don't know what you're looking for, give information on the skills you need and you'll be routed accordingly.
-- "please reboot system": this deletes all assistants and recreates them.
-- "please display last message": this shows the message you sent to the bot previously.
-- "please clear memory": this will start a new conversation thread, effectively wiping the assistant's memory.
-- "please clear all memory": this will wipe all asisstants' memory.
-- "please toggle text to speech": this will toggle betweeen OpenAI's TTS and the on-device TTS. OpenAI is used by default.
+- **GAI-life_coach/psychiatrist**: Aims to support mental health, personal growth, relationship advice, and navigating emotional challenges.
 
+Users may specify their preferred assistant manually if necessary.
 
-# Installation
+## Voice Commands
 
-1. Clone to computer
-2. Modify the [GPT.kt](https://github.com/Adri6336/GPT-Assistants-Interlink/blob/main/app/src/main/java/com/example/gpt_assistants_interlink/presentation/GPT.kt) file to have your API key as the OPENAI_KEY constant at the top of the file.
-3. Open project in Android Studio and build APK.
-4. Locate APK and use adb to install on your watch (make sure the watch has developer options enabled)
+Here's how you can interact with GPT-Assistants-Interlink using voice commands:
 
-# Customization After Installation
+- **"Please connect to a/an {specialist}":** Directs the system to link you to a specialist.
+- **"Please reboot system":** Resets and regenerates all assistant instances.
+- **"Please display last message":** Retrieves the most recent communication from the bot.
+- **"Please clear memory":** Initiates a new conversation thread, clearing the current assistant's memory.
+- **"Please clear all memory":** Resets the memory across all assistant instances.
+- **"Please toggle text to speech":** Switches between OpenAI's TTS and the watch's native TTS. The default setting uses OpenAI's TTS.
 
-You can manipulate the assistants from your OpenAI playground, changing the model, prompt, and adding features as desired. As long as you do not request deletion in the app, these should persist. 
+## Installation Guide
+
+1. Clone the repository to your computer.
+2. Update the [GPT.kt](https://github.com/Adri6336/GPT-Assistants-Interlink/blob/main/app/src/main/java/com/example/gpt_assistants_interlink/presentation/GPT.kt) file with your specific OpenAI API key.
+3. Launch the project in Android Studio and compile the APK.
+4. Transfer and install the APK onto your watch using adb (Developer options should be activated on the watch).
+
+## Customization Post-Installation
+
+Post-installation, you can modify the assistants within your OpenAI sandbox by altering the model, prompt, and features as you see fit. These customizations will remain intact unless deletion is initiated through the application.
+
+Make the most of your day with GPT-Assistants-Interlink, your smartwatch's ultimate virtual sidekick.
