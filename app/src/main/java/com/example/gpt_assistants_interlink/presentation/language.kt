@@ -343,3 +343,22 @@ suspend fun setup_tts_file(context: Context){
         write_text_to_file(context, "tts.txt", "true")
     }
 }
+
+suspend fun speak(use_openai_tts: Boolean, context: Context,
+                  coroutineScope: CoroutineScope, response: String,
+                  speaking: MutableState<Boolean>, assistant: MutableState<AssistantSettings>,
+                  buttonColor: MutableState<Color>, buttonTextColor: MutableState<Color>
+){
+    if (!use_openai_tts){
+        use_device_pronounced_tts(response, coroutineScope,
+            context, speaking,
+            assistant.value, buttonColor,
+            buttonTextColor)
+    } else {
+        use_openai_tts(context, response,
+            speaking,
+            assistant.value,
+            buttonColor,
+            buttonTextColor)
+    }
+}

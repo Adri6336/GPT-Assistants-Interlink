@@ -153,6 +153,9 @@ fun AppContent() {
         contract = ActivityResultContracts.RequestPermission()
     ){}
 
+    var last_reply = remember { mutableStateOf("Nothing has been said") }
+    var last_summary = remember { mutableStateOf("Nothing has been summarized") }
+
     LaunchedEffect(Unit){
         coroutineScope.launch {
             try {
@@ -233,12 +236,12 @@ fun AppContent() {
                              */
 
 
+
                             // PROCESSING ==============
                             if (prompt.contains("please connect me", ignoreCase = true) ||
                                 prompt.contains("please connect to", ignoreCase = true) ||
                                 prompt.contains("please connect your", ignoreCase = true)){
                                 system_command = true
-                                last_prompt.value = prompt
                                 var connect_message = ""
 
                                 if (prompt.contains("translat", ignoreCase = true)){
@@ -285,7 +288,6 @@ fun AppContent() {
 
 
                             } else if (prompt.contains("please reboot system")){
-                                last_prompt.value = prompt
                                 system_command = true
                                 screen_locked.value = true
                                 buttonText.value = "Purging Assistants ..."
@@ -332,16 +334,31 @@ fun AppContent() {
 
                             } else if (prompt.contains("please toggle TTS", ignoreCase = true) ||
                                         prompt.contains("please toggle text to speech", ignoreCase = true) ||
-                                        prompt.contains("please toggle t-t-s", ignoreCase = true)){
+                                        prompt.contains("please toggle t-t-s", ignoreCase = true) ||
+                                        prompt.contains("please toggle text-to-speech", ignoreCase = true)){
+                                system_command = true
                                 openai_tts.value = toggle_tts(context)
                                 buttonColor.value = Color.Black
                                 buttonText.value = "TTS Toggled"
+
+                            } else if (prompt.contains("please replay message", ignoreCase = true) ||
+                                    prompt.contains("please reply message", ignoreCase = true) ||
+                                    prompt.contains("please repeat message", ignoreCase = true)){
+
+                                system_command = true
+                                buttonText.value = last_summary.value
+                                speak(openai_tts.value, context, coroutineScope, last_reply.value, speaking,
+                                    assistant, buttonColor, buttonTextColor)
+
                             }
+                            last_prompt.value = prompt
 
                             // Enter command processing code here
                             flagged = moderate(prompt)
 
                             if (!system_command){  // Only process non-commands
+
+                                // 1. Grab main response from assistant AI
                                 last_prompt.value = prompt
                                 if (selected.value){  // Thread already loaded
                                     buttonText.value = "${assistant.value.name} thinking ..."
@@ -365,15 +382,21 @@ fun AppContent() {
                                         response = gpt.value.say_to_assistant(prompt)
                                     }
                                 }
+                                last_reply.value = response
 
+
+                                // 2. Grab summary of response from summary AI
                                 if (!switch && !flagged){  
                                     val summary_bot = Chatbot(GPT_MODEL, SUMMARY_SYS_PROMPT)
-                                    val summary = summary_bot.say_to_chatbot(response, 4095)
+                                    var summary = ""
 
                                     if (assistant.value.name != "GAI-translator"){
+                                        summary = summary_bot.say_to_chatbot(response, 4095)
                                         buttonText.value = summary
+                                        last_summary.value = summary
                                     } else {
                                         buttonText.value = response
+                                        last_summary.value = response
                                     }
                                 } else {
                                     buttonText.value = "Connected to ${assistant.value.name}."
@@ -382,18 +405,14 @@ fun AppContent() {
                                 }
 
 
-                                // Process TTS ============
-                                if (!openai_tts.value || flagged){
-                                    use_device_pronounced_tts(response, coroutineScope,
-                                        context, speaking,
-                                        assistant.value, buttonColor,
-                                        buttonTextColor)
+                                // 3. Process Text to Speech
+                                if (!flagged){
+                                    speak(openai_tts.value, context, coroutineScope, response, speaking,
+                                    assistant, buttonColor, buttonTextColor)
+
                                 } else {
-                                    use_openai_tts(context, response,
-                                        speaking,
-                                        assistant.value,
-                                        buttonColor,
-                                        buttonTextColor)
+                                    speak(false, context, coroutineScope, "Message flagged and not sent", speaking,
+                                        assistant, buttonColor, buttonTextColor)
                                 }
                             }
 
