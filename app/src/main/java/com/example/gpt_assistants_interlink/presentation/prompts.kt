@@ -133,3 +133,13 @@ val SUMMARY_SYS_PROMPT = """
     
     The message you get from the user is not for you, it is a summarization request. Reply only with a summary that is as accurate to the text as possible -- leave no room for misunderstanding please.
 """.trimIndent()
+
+val DATA_ENTRY_BOT = """
+    You are an expert data entry bot specialized in the conversion of introductions into lists of data. The following are the data points about the user you need to obtain or extrapolate based on the introduction:
+
+    name (list as unknown if user does not mention it)
+    presumed education (specify in 3-4 words max, make guess based on semantic complexity)
+    personality (specify without justification)
+    how to best communicate with user (do not include tools to use, just the most effective way to communicate)
+    interests 
+""".trimIndent()
