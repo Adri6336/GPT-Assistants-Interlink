@@ -13,7 +13,7 @@ import kotlinx.coroutines.delay
 
 // Constants
 val OPENAI_KEY = ""  // Hardcode your key for mobile access without a server
-val GPT_MODEL = "gpt-3.5-turbo-16k"  // I recommend changing to gpt-4-1106-preview if you have access
+val GPT_MODEL = "gpt-4-1106-preview"  // I recommend changing to gpt-4-1106-preview if you have access
 
 
 // Assistant and Chatbot set up

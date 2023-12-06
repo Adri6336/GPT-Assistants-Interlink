@@ -6,7 +6,11 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.FileInputStream
-
+import android.media.MediaPlayer
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 @Throws(IOException::class)
 fun write_text_to_file(context: Context, fileName: String, text: String, isPublic: Boolean = false) {
@@ -116,4 +120,35 @@ fun file_exists(context: Context, fileName: String): Boolean {
      */
     val file = File(context.filesDir, fileName)
     return file.exists()
+}
+
+suspend fun play_audio(context: Context, fileName: String) {
+    val externalFilesDir = context.getExternalFilesDir(null)
+
+    if (externalFilesDir != null && File(externalFilesDir, fileName).exists()) {
+        val audioFile = File(externalFilesDir, fileName)
+
+        withContext(Dispatchers.IO) {
+            // Step 1: Create a MediaPlayer to play the audio file
+            suspendCancellableCoroutine<Unit> { cont ->
+                val mediaPlayer = MediaPlayer().apply {
+                    setDataSource(audioFile.absolutePath)
+                    setOnCompletionListener {
+                        // Optional: Clean up after playback if necessary
+                        it.release()
+                        cont.resume(Unit)
+                    }
+                    prepare()
+                    start()
+                }
+
+                // If the coroutine is cancelled, release the resources
+                cont.invokeOnCancellation {
+                    mediaPlayer.release()
+                }
+            }
+        }
+    } else {
+        throw Exception("Audio file not found: $fileName")
+    }
 }

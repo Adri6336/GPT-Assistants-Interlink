@@ -347,8 +347,11 @@ fun AppContent() {
 
                                 system_command = true
                                 buttonText.value = last_summary.value
-                                speak(openai_tts.value, context, coroutineScope, last_reply.value, speaking,
-                                    assistant, buttonColor, buttonTextColor)
+
+                                if (!play_last_message(context)){
+                                    speak(openai_tts.value, context, coroutineScope, last_reply.value, speaking,
+                                        assistant, buttonColor, buttonTextColor)
+                                }
 
                             }
                             last_prompt.value = prompt

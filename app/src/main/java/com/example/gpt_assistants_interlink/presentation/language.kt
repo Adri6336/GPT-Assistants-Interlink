@@ -211,26 +211,35 @@ suspend fun use_openai_tts(
         if (response.status == HttpStatusCode.OK) {
             // Step 2: Save the received audio data to a file
             withContext(Dispatchers.IO) {
-                val audioFile = File(context.cacheDir, "generated_audio.mp3")
-                audioFile.writeBytes(response.readBytes())
+                val externalFilesDir = context.getExternalFilesDir(null)
 
-                // Step 3: Play the audio file and wait for completion
-                suspendCancellableCoroutine<Unit> { cont ->
-                    val mediaPlayer = MediaPlayer().apply {
-                        setDataSource(audioFile.absolutePath)
-                        setOnCompletionListener {
-                            // Step 4: Delete the file after playback and resume the coroutine
-                            audioFile.delete()
-                            it.release()
-                            cont.resume(Unit)
+                // Check if the external storage is writable
+                if (externalFilesDir != null && externalFilesDir.canWrite()) {
+                    val audioFile = File(externalFilesDir, "response.mp3")
+                    audioFile.writeBytes(response.readBytes())
+
+                    // Step 3: Play the audio file and wait for completion
+                    suspendCancellableCoroutine<Unit> { cont ->
+                        val mediaPlayer = MediaPlayer().apply {
+                            setDataSource(audioFile.absolutePath)
+                            setOnCompletionListener {
+                                // Optional: delete the file after playback if necessary
+                                // audioFile.delete()
+                                it.release()
+                                cont.resume(Unit)
+                            }
+                            prepare()
+                            start()
                         }
-                        prepare()
-                        start()
-                    }
 
-                    cont.invokeOnCancellation {
-                        mediaPlayer.release()
+                        cont.invokeOnCancellation {
+                            mediaPlayer.release()
+                            // Optional: delete the file if cancelled
+                            // audioFile.delete()
+                        }
                     }
+                } else {
+                    throw Exception("Cannot write to external storage.")
                 }
             }
         } else {
@@ -361,4 +370,13 @@ suspend fun speak(use_openai_tts: Boolean, context: Context,
             buttonColor,
             buttonTextColor)
     }
+}
+
+suspend fun play_last_message(context: Context): Boolean{
+    if (file_exists(context, "response.mp3")){
+        play_audio(context, "response.mp3")
+        return true
+    }
+
+    return false
 }
