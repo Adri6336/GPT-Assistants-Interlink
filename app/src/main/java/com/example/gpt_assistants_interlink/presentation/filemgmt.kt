@@ -6,6 +6,9 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.FileInputStream
+import android.media.MediaPlayer
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 
 @Throws(IOException::class)
@@ -116,4 +119,53 @@ fun file_exists(context: Context, fileName: String): Boolean {
      */
     val file = File(context.filesDir, fileName)
     return file.exists()
+}
+
+fun playAudioFromFile(context: Context, filePath: String) {
+    val mediaPlayer = MediaPlayer().apply {
+        try {
+            setDataSource(filePath)
+            prepare() // Prepares the player for playback, synchronously.
+            start() // Starts the playback.
+        } catch (e: IOException) {
+            e.printStackTrace()
+            // Handle the error here, such as by showing an error message to the user.
+        } catch (e: IllegalStateException) {
+            e.printStackTrace()
+            // Handle the error here.
+        }
+    }
+
+    // Make sure to release the media player resources when done
+    mediaPlayer.setOnCompletionListener {
+        it.release()
+    }
+
+    mediaPlayer.setOnErrorListener { mp, what, extra ->
+        mp.release()
+        true // Indicates we handled the error
+    }
+}
+
+suspend fun playAudioFromRawResource(context: Context, resourceId: Int) = suspendCancellableCoroutine<Unit> { continuation ->
+    val mediaPlayer = MediaPlayer.create(context, resourceId)
+    mediaPlayer?.start() // Starts the playback.
+
+    // Set a listener to resume the coroutine once the playback is complete
+    mediaPlayer?.setOnCompletionListener { mp ->
+        mp.release() // Release the resources used by the media player
+        continuation.resume(Unit) // Resume the coroutine after playback is complete
+    }
+
+    mediaPlayer?.setOnErrorListener { mp, what, extra ->
+        mp.release()
+        continuation.resume(Unit) // Resume the coroutine even if there is an error
+        true // Indicates we handled the error
+    }
+
+    // Handle cancellation of the coroutine
+    continuation.invokeOnCancellation {
+        mediaPlayer?.stop()
+        mediaPlayer?.release()
+    }
 }

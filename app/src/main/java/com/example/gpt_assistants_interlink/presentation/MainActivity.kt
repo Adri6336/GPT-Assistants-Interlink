@@ -5,6 +5,7 @@
  */
 
 package com.example.gpt_assistants_interlink.presentation
+import com.example.gpt_assistants_interlink.R
 
 import android.Manifest
 import android.content.Context
@@ -41,7 +42,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.lang.Exception
+import kotlin.Exception
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -130,6 +131,8 @@ fun AppContent() {
     var buttonTextColor = remember { mutableStateOf(Color.White) }
 
     var ready = remember { mutableStateOf(false) }
+    var first_start = remember { mutableStateOf(true) }
+
     var gpt = remember { mutableStateOf(GPT(""))}  
     var main_thread: ThreadObject
     var step = "start"
@@ -156,24 +159,48 @@ fun AppContent() {
     var last_reply = remember { mutableStateOf("Nothing has been said") }
     var last_summary = remember { mutableStateOf("Nothing has been summarized") }
 
+    var assistants_list: AssistantList
     LaunchedEffect(Unit){
         coroutineScope.launch {
             try {
 
+                // 1. Set Up TTS
                 buttonColor.value = Color.Blue
                 buttonText.value = "Setting Up Interlink"
 
                 setup_tts_file(context)
                 openai_tts.value = openai_tts_is_method(context)
 
-                try{
-                    load_ids(context)
-                } catch (e: Exception){
-                    instantiate_or_connect_swarm(context)
+                // 2. Determine if first start
+                if (!file_exists(context, "userdat.txt")){
+
+                    // 2.1 Test if valid key added
+                    try{
+                        assistants_list = list_assistants()
+                    } catch (e: Exception){
+                        Log.d("Connection Failure", "Attempted to list assistants and failed")
+                        throw Exception("Could not communicate with OpenAI. Make sure you added a valid key please.")
+                    }
+
+                    // 2.2 Engage Introduction
+                    buttonText.value = "Welcome to GAI! Please tell me your name and a bit about yourself."
+                    playAudioFromRawResource(context, R.raw.startup2)
+                    playAudioFromRawResource(context, R.raw.intro)
+                    buttonText.value = "Tap to give introduction to AI"
+
+
+                } else {  // Just connect
+
+                    try{
+                        load_ids(context)
+                    } catch (e: Exception){
+                        instantiate_or_connect_swarm(context)
+                    }
+
+                    buttonText.value = "Ready For Use\nTap to Begin"
+                    first_start.value = false
                 }
 
-
-                buttonText.value = "Ready For Use\nTap to Begin"
                 buttonColor.value = Color.Black
                 screen_locked.value = false
                 ready.value = true
@@ -234,6 +261,29 @@ fun AppContent() {
                             to understand how it works in relation to everything else (tap to record and tap to stop)
                             but I've come up empty. It may be that I'm tired af tho lol
                              */
+
+                            // PROCESS FIRST START IF NEEDED
+                            if (first_start.value){
+                                system_command = true
+                                flagged = moderate(prompt)
+
+                                if (!flagged){
+                                    buttonColor.value = Color.Red
+                                    buttonText.value = "Personalizing AI ..."
+
+                                    create_userdat(context, prompt)
+                                    instantiate_or_connect_swarm(context)
+
+                                    buttonColor.value = Color.Black
+                                    buttonText.value = "AI personalized successfully. Please tap to start."
+                                    first_start.value = false
+
+                                } else {
+                                    buttonColor.value = Color.Black
+                                    buttonText.value = "Message flagged. Please try again if mistake, or reword to exclude anything against OpenAI's TOS."
+                                }
+
+                            }
 
 
 

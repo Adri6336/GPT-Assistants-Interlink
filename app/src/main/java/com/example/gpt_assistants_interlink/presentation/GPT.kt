@@ -238,6 +238,7 @@ suspend fun load_ids(context: Context){
 suspend fun instantiate_or_connect_swarm(context: Context){
     val assistant_list = list_assistants().data
     var id_file = ""  // This is the file that will contain our assistant ids
+    val userdat = read_text_from_file(context, "userdat.txt")
 
     for (setting in assistants){
 
@@ -253,10 +254,10 @@ suspend fun instantiate_or_connect_swarm(context: Context){
             var new_id = ""
 
             if (GPT_MODEL != "gpt-4-1106-preview"){
-                new_id = create_assistant(setting.sys_prompt, setting.name,
+                new_id = create_assistant("${setting.sys_prompt}\n\nUser Info:\n$userdat", setting.name,
                     setting.abilities.interpreter, false)  // Only preview version does this
             } else {
-                new_id = create_assistant(setting.sys_prompt, setting.name,
+                new_id = create_assistant("${setting.sys_prompt}\n\nUser Info:\n$userdat", setting.name,
                     setting.abilities.interpreter, setting.abilities.retrieval)
             }
 
@@ -501,6 +502,13 @@ suspend fun select_assistant(prompt: String): AssistantSettings{
     }
 
     return assistants[1]  // Use generalist
+}
+
+
+suspend fun create_userdat(context: Context, prompt: String){
+    val chatbot = Chatbot(GPT_MODEL, DATA_ENTRY_BOT)
+    val data = chatbot.say_to_chatbot(prompt, tokens = 1089)
+    write_text_to_file(context, "userdat.txt", data)
 }
 
 suspend fun select_assistant_manual(name: String): AssistantSettings{
