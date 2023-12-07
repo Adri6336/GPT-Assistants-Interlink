@@ -159,7 +159,8 @@ fun AppContent() {
     var last_reply = remember { mutableStateOf("Nothing has been said") }
     var last_summary = remember { mutableStateOf("Nothing has been summarized") }
 
-    var assistants_list: AssistantList
+    var assistants_list: List<Assistant>
+
     LaunchedEffect(Unit){
         coroutineScope.launch {
             try {
@@ -172,15 +173,21 @@ fun AppContent() {
                 openai_tts.value = openai_tts_is_method(context)
 
                 // 2. Determine if first start
-                if (!file_exists(context, "userdat.txt")){
 
-                    // 2.1 Test if valid key added
-                    try{
-                        assistants_list = list_assistants()
-                    } catch (e: Exception){
-                        Log.d("Connection Failure", "Attempted to list assistants and failed")
-                        throw Exception("Could not communicate with OpenAI. Make sure you added a valid key please.")
-                    }
+                // 2.1 Test if valid key added
+                if (OPENAI_KEY == ""){
+                    throw Exception("No OpenAI key added. Please set key in GPT.kt file.")
+                }
+
+                try{
+                    assistants_list = list_assistants().data
+
+                } catch (e: Exception){
+                    Log.d("Connection Failure", "Attempted to list assistants and failed")
+                    throw Exception("Could not communicate with OpenAI. Make sure you added a valid key please.")
+                }
+
+                if (!file_exists(context, "userdat.txt") && !check_assistants_with_user_info(assistants_list)){
 
                     // 2.2 Engage Introduction
                     buttonText.value = "Welcome to GAI! Please tell me your name and a bit about yourself."

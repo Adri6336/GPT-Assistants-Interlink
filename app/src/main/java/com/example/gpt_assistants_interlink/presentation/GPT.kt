@@ -235,36 +235,52 @@ suspend fun load_ids(context: Context){
     }
 
 }
-suspend fun instantiate_or_connect_swarm(context: Context){
-    val assistant_list = list_assistants().data
-    var id_file = ""  // This is the file that will contain our assistant ids
-    val userdat = read_text_from_file(context, "userdat.txt")
 
-    for (setting in assistants){
+suspend fun check_assistants_with_user_info(assistantList: List<Assistant>): Boolean {
+    // Retrieve the names of expected assistants from the constant list
+    val expectedAssistantNames = assistants.map { it.name }.toSet()
 
+    // Check if all expected assistants are present in the assistantList with "User Info:" in instructions
+    return assistantList.count { assistant ->
+        expectedAssistantNames.contains(assistant.name) && assistant.instructions.contains("User Info:")
+    } == expectedAssistantNames.size - 1  // The translator should not have user data
+}
+
+suspend fun instantiate_or_connect_swarm(context: Context) {
+    val assistant_list = list_assistants().data // This function should return a list of Assistant objects
+    var id_file = "" // This is the file that will contain our assistant ids
+    var userInfoText = ""
+
+    val isGpt4PreviewModel = GPT_MODEL == "gpt-4-1106-preview"
+
+    for (setting in assistants) { // iterate over the constant list of settings
         // 1. Check if we have an assistant already created with OpenAI
-        val gai_assistant = assistant_list.findAssistantByName(setting.name)
+        val gai_assistant = assistant_list.find { it.name == setting.name }
         gai_assistant?.let {
             // Assistant with the given name found.
-            setting.assistant_id = it.id
-            id_file = "$id_file${it.id}\n"  // Append id to file
-
+            if (it.instructions.contains("User Info:")) {
+                userInfoText = it.instructions.substringAfter("User Info:")
+                write_text_to_file(context, "userdat.txt", userInfoText, isPublic = false)
+                id_file += "${it.id}\n" // Append id to file
+            }
         } ?: run {
             // Assistant with the given name not found.
-            var new_id = ""
+            val userdat = read_text_from_file(context, "userdat.txt")
 
-            if (GPT_MODEL != "gpt-4-1106-preview"){
-                new_id = create_assistant("${setting.sys_prompt}\n\nUser Info:\n$userdat", setting.name,
-                    setting.abilities.interpreter, false)  // Only preview version does this
+            val newAssistantInstructions = if (setting.name == "GAI-translator") {  // The translator will be confused with user data
+                setting.sys_prompt
             } else {
-                new_id = create_assistant("${setting.sys_prompt}\n\nUser Info:\n$userdat", setting.name,
-                    setting.abilities.interpreter, setting.abilities.retrieval)
+                "${setting.sys_prompt}\n\nUser Info:\n$userdat"
             }
 
-            id_file = "$id_file$new_id\n"  // Append id to file
+            val codeInterpreter = setting.abilities.interpreter
 
+            val retrieval = (isGpt4PreviewModel && setting.abilities.retrieval) // retrieval is not used unless the model is gpt-4-1106-preview and it's called for
+
+
+            val new_id = create_assistant(newAssistantInstructions, setting.name, codeInterpreter, retrieval)
+            id_file += "$new_id\n" // Append new id to file
         }
-
     }
 
     write_text_to_file(context, "assistant_ids.txt", id_file)
