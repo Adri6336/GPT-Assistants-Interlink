@@ -224,7 +224,7 @@ suspend fun load_ids(context: Context){
 
 
     if (assistants.size != ids.size){
-        throw java.lang.Exception("Amount of IDs not Equal to Num Assistants")
+        throw Exception("Amount of IDs not Equal to Num Assistants")
     }
 
     var pos = 0  // This represents your current position in the list of assistants
@@ -258,6 +258,8 @@ suspend fun instantiate_or_connect_swarm(context: Context) {
         val gai_assistant = assistant_list.find { it.name == setting.name }
         gai_assistant?.let {
             // Assistant with the given name found.
+            setting.assistant_id = it.id
+
             if (it.instructions.contains("User Info:")) {
                 userInfoText = it.instructions.substringAfter("User Info:")
                 write_text_to_file(context, "userdat.txt", userInfoText, isPublic = false)
