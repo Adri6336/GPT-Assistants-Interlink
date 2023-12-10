@@ -270,6 +270,7 @@ fun AppContent() {
                              */
 
                             // PROCESS FIRST START IF NEEDED
+                            flagged = moderate(prompt)
                             if (first_start.value){
                                 system_command = true
                                 flagged = moderate(prompt)
@@ -411,8 +412,6 @@ fun AppContent() {
                             last_prompt.value = prompt
 
                             // Enter command processing code here
-                            flagged = moderate(prompt)
-
                             if (!system_command){  // Only process non-commands
 
                                 // 1. Grab main response from assistant AI
