@@ -281,6 +281,7 @@ suspend fun instantiate_or_connect_swarm(context: Context) {
 
 
             val new_id = create_assistant(newAssistantInstructions, setting.name, codeInterpreter, retrieval)
+            setting.assistant_id = new_id
             id_file += "$new_id\n" // Append new id to file
         }
     }
