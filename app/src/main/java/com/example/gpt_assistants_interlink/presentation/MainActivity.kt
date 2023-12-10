@@ -322,7 +322,6 @@ fun AppContent() {
                                 prompt.contains("please connect to", ignoreCase = true) ||
                                 prompt.contains("please connect your", ignoreCase = true)){
                                 system_command = true
-                                var connect_message = ""
 
                                 if (prompt.contains("translat", ignoreCase = true)){
                                     assistant.value = assistants[0]
@@ -353,19 +352,43 @@ fun AppContent() {
                                     assistant.value = select_assistant(prompt)  // Use language model if uncertain
                                 }
 
-
                                 selected.value = true
-
                                 gpt.value = GPT(assistant.value.assistant_id)
                                 gpt.value.load_or_create_thread(context)
-                                connect_message = "Connected to ${assistant.value.name}"
-                                vibrateWatch(context)
-                                buttonText.value = connect_message
-                                use_device_pronounced_tts(connect_message, coroutineScope,
-                                    context, speaking,
-                                    assistant.value, buttonColor,
-                                    buttonTextColor)
 
+                                if (assistant.value.name == "GAI-translator"){
+                                    play_system_message(context, R.raw.connecttranslate, buttonText,
+                                    buttonColor, "Connected to GAI-translator")
+
+                                } else if (assistant.value.name == "GAI-generalist"){
+                                    play_system_message(context, R.raw.connectgen, buttonText,
+                                        buttonColor, "Connected to GAI-generalist")
+
+                                } else if (assistant.value.name == "GAI-engineer/mechanic"){
+                                    play_system_message(context, R.raw.connectengin, buttonText,
+                                        buttonColor, "Connected to GAI-engineer/mechanic")
+
+                                } else if (assistant.value.name == "GAI-friend"){
+                                    play_system_message(context, R.raw.connectfriend, buttonText,
+                                        buttonColor, "Connected to GAI-friend")
+
+                                } else if (assistant.value.name == "GAI-advisor") {
+                                    play_system_message(context, R.raw.connectadvisor, buttonText,
+                                        buttonColor, "Connected to GAI-advisor")
+
+                                } else if (assistant.value.name == "GAI-maths/accounting"){
+                                    play_system_message(context, R.raw.connectmaths, buttonText,
+                                        buttonColor, "Connected to GAI-maths/accounting")
+
+                                } else if (assistant.value.name == "GAI-scientist/physicist"){
+                                    play_system_message(context, R.raw.connectsci, buttonText,
+                                        buttonColor, "Connected to GAI-scientist/physicist")
+
+                                } else if (assistant.value.name == "GAI-life_coach/psychiatrist"){
+                                    play_system_message(context, R.raw.connectpsych, buttonText,
+                                        buttonColor, "Connected to GAI-life_coach/psychiatrist")
+
+                                }
 
                             } else if (prompt.contains("please reboot system")){
                                 system_command = true

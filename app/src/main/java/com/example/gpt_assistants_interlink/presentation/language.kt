@@ -9,6 +9,7 @@ import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.graphics.Color
+import androidx.core.R
 import androidx.core.content.ContextCompat
 import androidx.wear.tiles.material.ButtonColors
 import com.google.mlkit.nl.languageid.LanguageIdentification
@@ -361,4 +362,20 @@ suspend fun speak(use_openai_tts: Boolean, context: Context,
             buttonColor,
             buttonTextColor)
     }
+}
+
+suspend fun play_system_message(context: Context, resource: Int,
+                                button_text_setting: MutableState<String>,
+                                button_color_setting: MutableState<Color>,
+                                message: String){
+    /*
+    This plays a resource and displays a message with the system color to indicate to
+    the user that it is the system speaking.
+     */
+
+    button_color_setting.value = Color.Blue
+    button_text_setting.value = message
+    vibrateWatch(context)
+    playAudioFromRawResource(context, resource)
+    button_color_setting.value = Color.Black
 }
