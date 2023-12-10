@@ -12,6 +12,11 @@ class StateTracker(){
     val working = false
 }
 
+data class ID_Name_Prompt(
+    var id: String,
+    var name: String,
+    var prompt: String)
+
 fun reset_colors(background: MutableState<Color>, text: MutableState<Color>){
     background.value = Color.Black
     text.value = Color.White

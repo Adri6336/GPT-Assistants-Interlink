@@ -543,3 +543,121 @@ suspend fun select_assistant_manual(name: String): AssistantSettings{
 suspend fun save_thread_to_assistant(context: Context, assistant_id: String, thread_id: String){
     write_text_to_file(context, "$assistant_id.txt", thread_id)
 }
+
+
+suspend fun modify_assistant(
+    assistantId: String,
+    model: String? = null,
+    name: String? = null,
+    description: String? = null,
+    instructions: String? = null,
+    tools: List<Map<String, String>>? = listOf(),
+    fileIds: List<String>? = listOf(),
+    metadata: Map<String, String>? = null
+): String {
+    val client = HttpClient {
+        install(JsonFeature) {
+            serializer = JSONSERIALIZER
+        }
+        defaultRequest {
+            header(HttpHeaders.Authorization, "Bearer $OPENAI_KEY")
+            header("OpenAI-Beta", "assistants=v1")
+            contentType(ContentType.Application.Json)
+        }
+        HttpResponseValidator {
+            validateResponse { response ->
+                val statusCode = response.status.value
+                when (statusCode) {
+                    in 400..499 -> throw ClientRequestException(response, "Client error: $statusCode")
+                    in 500..599 -> throw ServerResponseException(response, "Server error: $statusCode")
+                }
+            }
+        }
+    }
+
+    try {
+        val requestBody = UpdateAssistantRequestBody(
+            model = model,
+            name = name,
+            description = description,
+            instructions = instructions,
+            tools = tools,
+            file_ids = fileIds,
+            metadata = metadata
+        )
+
+        val response: String = client.post("https://api.openai.com/v1/assistants/$assistantId") {
+            body = requestBody
+        }
+
+        return response
+    } catch (e: ClientRequestException) {
+        // Handle client-side request error
+        e.printStackTrace()
+        throw e
+    } catch (e: ServerResponseException) {
+        // Handle server-side error
+        e.printStackTrace()
+        throw e
+    } catch (e: Exception) {
+        // Handle any other errors
+        e.printStackTrace()
+        throw e
+    } finally {
+        client.close()
+    }
+}
+
+
+suspend fun grab_full_assistants(saved_assistants: List<Assistant>): List<Assistant>{
+    val gai_assistants = mutableListOf<Assistant>()
+    //val saved_assistants_online = list_assistants().data
+
+    for (gai in assistants){
+        val located_gai = saved_assistants.findAssistantByName(gai.name)
+
+        located_gai?.let{
+            gai_assistants.add(it)
+
+        } ?: run {
+            // Don't do anything
+        }
+    }
+
+    //throw Exception(gai_assistants.toString())
+    return gai_assistants.toList()
+}
+
+suspend fun get_id_name_prompt(full_gai: Assistant): ID_Name_Prompt{
+    return ID_Name_Prompt(full_gai.id, full_gai.name, full_gai.instructions)
+}
+
+suspend fun personalize_existing_gais(context: Context, saved_assistants: List<Assistant>){
+
+    // 0. Ensure user data
+    if (!file_exists(context, "userdat.txt")){
+        throw Exception("Cannot personalize until userdat.txt filled")
+    }
+    val user_data = read_text_from_file(context, "userdat.txt")
+
+    // 1. Collect GAI assistants
+    val gais = saved_assistants  // Used to be something else here but just wanted a quick fix
+
+    // 2. Collect ID_Prompts
+    val gai_id_name_prompts = mutableListOf<ID_Name_Prompt>()
+    var id_name_prompt: ID_Name_Prompt
+
+    for (gai in gais){
+        id_name_prompt = get_id_name_prompt(gai)
+        gai_id_name_prompts.add(id_name_prompt)
+    }
+
+    // 3. Update each assistant who's prompt does not include "User Info:"
+    for (gai in gai_id_name_prompts){
+        if (!gai.prompt.contains("User Info:", ignoreCase = true) && gai.name != "GAI-translator"){
+            // Translator should not have personalization
+            modify_assistant(gai.id, instructions = "${gai.prompt}\n\nUser Info:\n$user_data")
+        }
+    }
+
+}

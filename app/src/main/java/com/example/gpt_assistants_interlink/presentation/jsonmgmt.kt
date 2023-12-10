@@ -176,3 +176,13 @@ data class CreateRun(val assistant_id: String)
 @Serializable
 data class PollRun(val run_id: String)
 
+@Serializable
+data class UpdateAssistantRequestBody(
+    val model: String? = null,
+    val name: String? = null,
+    val description: String? = null,
+    val instructions: String? = "",
+    val tools: List<Map<String, String>>? = listOf(),
+    val file_ids: List<String>? = listOf(),
+    val metadata: Map<String, String>? = null
+)

@@ -42,6 +42,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.lang.Thread.sleep
 import kotlin.Exception
 
 class MainActivity : ComponentActivity() {
@@ -159,7 +160,11 @@ fun AppContent() {
     var last_reply = remember { mutableStateOf("Nothing has been said") }
     var last_summary = remember { mutableStateOf("Nothing has been summarized") }
 
-    var assistants_list: List<Assistant>
+    var assistants_list = remember { mutableStateOf(listOf<Assistant>(
+        Assistant("", "", 1L, "", "",  // Placeholder
+            "", "", listOf(Tool("")), listOf(""))))
+    }
+
 
     LaunchedEffect(Unit){
         coroutineScope.launch {
@@ -180,14 +185,14 @@ fun AppContent() {
                 }
 
                 try{
-                    assistants_list = list_assistants().data
+                    assistants_list.value = list_assistants().data
 
                 } catch (e: Exception){
                     Log.d("Connection Failure", "Attempted to list assistants and failed")
                     throw Exception("Could not communicate with OpenAI. Make sure you added a valid key please.")
                 }
 
-                if (!file_exists(context, "userdat.txt") && !check_assistants_with_user_info(assistants_list)){
+                if (!file_exists(context, "userdat.txt") && !check_assistants_with_user_info(assistants_list.value)){
 
                     // 2.2 Engage Introduction
                     buttonText.value = "Welcome to GAI! Please tell me your name and a bit about yourself."
@@ -281,7 +286,18 @@ fun AppContent() {
                                     playAudioFromRawResource(context, R.raw.personalize)
 
                                     create_userdat(context, prompt)
-                                    instantiate_or_connect_swarm(context)
+
+                                    // Over here split operations
+                                    // If user has assistants, append data to instructions
+                                    val gai_assistants = grab_full_assistants(assistants_list.value)
+
+                                    if (gai_assistants.isNotEmpty()){
+                                        personalize_existing_gais(context, gai_assistants)
+                                        instantiate_or_connect_swarm(context)
+                                    } else {
+                                        instantiate_or_connect_swarm(context)
+                                    }
+
                                     playAudioFromRawResource(context, R.raw.notice)
 
                                     buttonColor.value = Color.Blue
