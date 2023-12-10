@@ -278,9 +278,15 @@ fun AppContent() {
                                 if (!flagged){
                                     buttonColor.value = Color.Red
                                     buttonText.value = "Personalizing AI ..."
+                                    playAudioFromRawResource(context, R.raw.personalize)
 
                                     create_userdat(context, prompt)
                                     instantiate_or_connect_swarm(context)
+                                    playAudioFromRawResource(context, R.raw.notice)
+
+                                    buttonColor.value = Color.Blue
+                                    buttonText.value = "Process completed."
+                                    playAudioFromRawResource(context, R.raw.finished)
 
                                     buttonColor.value = Color.Black
                                     buttonText.value = "AI personalized successfully. Please tap to start."
