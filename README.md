@@ -1,6 +1,6 @@
 # GPT-Assistants-Interlink
 
-GPT-Assistants-Interlink is a mobile assistant app optimized for your Android smartwatch that takes advantage of OpenAI's API, using its Assistants, Whisper, Chat, and TTS tools to empower your device. This application is engineered to enhance your daily life by providing responsive virtual assistance and companionship on the fly, using a suite of specialized AI instances tailored for various tasks.
+GPT-Assistants-Interlink is a mobile assistant app optimized for your Android smartwatch that takes advantage of OpenAI's API, using its Assistants, Whisper, Chat, and TTS tools to empower your device. This application is engineered to enhance your daily life by providing responsive and personalized virtual assistance and companionship on the fly, using a suite of specialized AI instances tailored for various tasks.
 
 Optimized for the Ticwatch Pro 3 Ultra.
 
@@ -18,9 +18,9 @@ Conversations flow seamlessly with your chosen assistant and switch only on expl
 
 - **GAI-translator**: Specializes in translating content between English and other languages or vice versa.
   
-- **GAI-generalist**: A jack-of-all-trades assistant for general inquiries.
+- **GAI-generalist**: A jack-of-all-trades assistant for general inquiries and memory storing.
 
-- **GAI-engineer/mechanic**: Dedicated to topics concerning devices, machinery, and tools.
+- **GAI-engineer/mechanic**: Dedicated to topics concerning devices, software, machinery, and tools.
 
 - **GAI-friend**: Offers companionship and casual conversation for users seeking social interaction.
 
@@ -30,7 +30,7 @@ Conversations flow seamlessly with your chosen assistant and switch only on expl
 
 - **GAI-scientist/physicist**: Engages users with discussions or questions related to science and physics.
 
-- **GAI-life_coach/psychiatrist**: Aims to support mental health, personal growth, relationship advice, and navigating emotional challenges.
+- **GAI-life_coach/psychiatrist**: Aims to support mental health, personal growth, relationship advice, and navigating emotional challenges. Will ask questions to better help user with tailored counseling.
 
 Users may specify their preferred assistant manually if necessary.
 
@@ -57,3 +57,18 @@ Here's how you can interact with GPT-Assistants-Interlink using voice commands:
 Post-installation, you can modify the assistants within your OpenAI sandbox by altering the model, prompt, and features as you see fit. These customizations will remain intact unless deletion is initiated through the application.
 
 Make the most of your day with GPT-Assistants-Interlink, your smartwatch's ultimate virtual sidekick.
+
+
+## Personalization Setup
+
+As you begin using GPT Assistants Interlink, you will encounter a personalization setup that is instrumental for tailoring the AI to your unique communication style. Follow these simple steps to ensure the best possible customization:
+
+1. Start off by tapping the screen to activate the introduction sequence.
+2. Record a message, expressing yourself just as you typically would—if you're someone who frequently uses slang or technical jargon, don't hold back. In this message, tell the machine a bit about yourself, such as your name, interests, and other meaningful info.
+3. Conclude your introduction by tapping the screen once again.
+
+Your recorded introduction plays a critical role in calibrating the AI. It analyzes your speech patterns, vocabulary, and preferred expressions to adapt its interactions with you. This means that the more authentic and detailed you are during this phase, the better the AI can align with your conversational style.
+
+Additionally, if you experience any neurodivergence such as ADHD, consider mentioning this in your introduction. It enables the AI to make adjustments in how it presents information, striving to deliver responses in a way that may cater to your cognitive preferences.
+
+By engaging with the personalization setup thoughtfully, you set the stage for a more responsive and individualized experience with GPT Assistants Interlink. Your input here is invaluable for creating an AI companion that feels right at home with your way of communicating and interacts with you as a known unique person rather than just another random user.
