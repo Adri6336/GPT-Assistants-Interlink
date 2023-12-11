@@ -38,7 +38,7 @@ data class AssistantSettings(
 
 data class GPTChatModel(val code: String, val max_tokens: Int)
 
-val assistants = listOf<AssistantSettings>(
+var assistants = listOf<AssistantSettings>(
     AssistantSettings("GAI-translator", "",
         Color(51, 204, 255),
         Color(0, 0, 0),
@@ -214,6 +214,12 @@ suspend fun purge_assistants(context: Context){
 }
 
 suspend fun load_ids(context: Context){
+    if (file_exists(context, "assistants.json")){
+        assistants = convertJsonToAssistantSettingsList(read_text_from_file(context, "assistants.json"))
+        return
+    }
+    // It's too late to push a comprehensive fix where I live, this will solve the issue for the time being
+
     var ids: List<String>
 
     if (file_exists(context, "assistant_ids.txt")){
@@ -286,7 +292,9 @@ suspend fun instantiate_or_connect_swarm(context: Context) {
         }
     }
 
-    write_text_to_file(context, "assistant_ids.txt", id_file)
+    val save_file = convertAssistantSettingsListToJson(assistants)
+    write_text_to_file(context, "assistants.json", save_file)  // Quick fix, will be solidified when I get time
+    write_text_to_file(context, "assistant_ids.txt", id_file)  // Something is wrong here, this leads to incorrect connections
 }
 
 

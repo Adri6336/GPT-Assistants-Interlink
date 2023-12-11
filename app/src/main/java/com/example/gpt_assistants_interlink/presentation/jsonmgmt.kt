@@ -1,11 +1,13 @@
 package com.example.gpt_assistants_interlink.presentation
 
+import androidx.compose.ui.graphics.Color
+import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
 import io.ktor.client.features.json.GsonSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject
+import com.google.gson.reflect.TypeToken
+import com.google.gson.*
+import java.lang.reflect.Type
 
 val JSONSERIALIZER = GsonSerializer()
 
@@ -186,3 +188,38 @@ data class UpdateAssistantRequestBody(
     val file_ids: List<String>? = listOf(),
     val metadata: Map<String, String>? = null
 )
+
+
+class ColorSerializer : JsonSerializer<Color>, JsonDeserializer<Color> {
+    override fun serialize(src: Color, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
+        // Assuming the `red`, `green`, and `blue` values are Floats from 0 to 1
+        val red = (src.red * 255).toInt()
+        val green = (src.green * 255).toInt()
+        val blue = (src.blue * 255).toInt()
+        val rgb = (red shl 16) or (green shl 8) or blue
+        return JsonPrimitive(String.format("#%06X", rgb))
+    }
+
+    override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): Color {
+        val rgbString = json.asString.removePrefix("#")
+        val rgb = rgbString.toInt(16)
+        return Color(rgb)
+    }
+}
+
+fun convertAssistantSettingsListToJson(settingsList: List<AssistantSettings>): String {
+    val gson = GsonBuilder()
+        .registerTypeAdapter(Color::class.java, ColorSerializer()) // Register our custom serializer
+        .create()
+
+    return gson.toJson(settingsList)
+}
+
+fun convertJsonToAssistantSettingsList(jsonString: String): List<AssistantSettings> {
+    val gson = GsonBuilder()
+        .registerTypeAdapter(Color::class.java, ColorSerializer()) // Register the custom serializer
+        .create()
+
+    val listType = object : TypeToken<List<AssistantSettings>>() {}.type
+    return gson.fromJson(jsonString, listType)
+}
