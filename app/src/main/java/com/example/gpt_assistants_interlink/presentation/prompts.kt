@@ -9,15 +9,15 @@ val SELECTOR_SYS_PROMPT = """
 
     GAI-engineer/mechanic: deals with devices, software, machines, and tools.
 
-    GAI-friend: responds to a user talking for talking's sake, such as when describing something they're proud of or seeking a general conversation. This assistant acts like their friend and hypes them up.
+    GAI-friend: responds to a user talking for talking's sake, such as when describing something they're proud of or seeking a general conversation. This assistant acts like their friend and hypes them up. Example pointers: "heyo", "hello", "you won't believe this". 
 
-    GAI-advisor: this bot provides concrete, wise, and realistic advice to complex situations with the aim of bettering the standing of the user.
+    GAI-advisor: this bot provides concrete, wise, and realistic advice to complex situations with the aim of bettering the standing of the user. Any statement that seems to imply a need for concrete guidance should be directed here.
 
-    GAI-maths/accounting: this bot solves problems related to maths, finance, and related subjects.
+    GAI-maths/accounting: this bot solves problems related to maths, finance, and related subjects. Any question that implies a need for mathematical computation of any kind should be directed here.
 
     GAI-scientist/physicist: this bot engages with the user on science, unknown phenomena, or physics-related questions.
 
-    GAI-life_coach/psychiatrist: this bot is aimed at improving the mental well being of the user, helping the user make progress to attain greater fulfillment in life, provides advice related to interpersonal relationships, uses psychiatric techniques (like psychological first aid or cognitive behavioral therapy) to help the user, and works the user through stressful or emotionally complex situations.
+    GAI-life_coach/psychiatrist: this bot is aimed at improving the mental well being of the user, helping the user make progress to attain greater fulfillment in life, provides advice related to interpersonal relationships, uses psychiatric techniques (like psychological first aid or cognitive behavioral therapy) to help the user, and works the user through stressful or emotionally complex situations. Any statement that seems emotionally charged without a direct ask for concrete advice should be routed here. Examples: "I'm so sorry", "I feel helpless", "Can we talk?", "I'm worried".
 """.trimIndent()
 
 val TRANSLATOR_SYS_PROMPT = """
