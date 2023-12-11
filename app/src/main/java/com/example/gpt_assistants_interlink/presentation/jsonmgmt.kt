@@ -1,11 +1,9 @@
 package com.example.gpt_assistants_interlink.presentation
 
+import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import io.ktor.client.features.json.GsonSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject
 
 val JSONSERIALIZER = GsonSerializer()
 
@@ -186,3 +184,18 @@ data class UpdateAssistantRequestBody(
     val file_ids: List<String>? = listOf(),
     val metadata: Map<String, String>? = null
 )
+
+@Serializable
+data class GPTColor(
+    val rgb: List<Int>
+)
+
+fun convert_gptcolor_json_to_object(jsonString: String): GPTColor {
+    val gson = Gson()
+    return gson.fromJson(jsonString, GPTColor::class.java)
+}
+
+fun convert_gptcolor_to_json(gptColor: GPTColor): String {
+    val gson = Gson()
+    return gson.toJson(gptColor)
+}

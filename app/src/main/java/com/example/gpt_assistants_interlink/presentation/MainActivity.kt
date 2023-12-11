@@ -8,7 +8,6 @@ package com.example.gpt_assistants_interlink.presentation
 import com.example.gpt_assistants_interlink.R
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.VibrationEffect
@@ -38,9 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.example.gpt_assistants_interlink.presentation.theme.GPTAssistantsInterlinkTheme
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.lang.Thread.sleep
 import kotlin.Exception
@@ -165,13 +161,25 @@ fun AppContent() {
             "", "", listOf(Tool("")), listOf(""))))
     }
 
+    var system_button_color = remember { mutableStateOf(Color.Blue) }
+    var system_text_color = remember { mutableStateOf(Color.White) }
+
 
     LaunchedEffect(Unit){
         coroutineScope.launch {
             try {
+                // 0. Setup system colors
+                if (file_exists(context, "colors.json")){
+                    val system_colors = convert_gptcolor_json_to_object(read_text_from_file(context,
+                    "colors.json"))
+                    system_button_color.value = Color(system_colors.rgb[0], system_colors.rgb[1],
+                    system_colors.rgb[2])
+                    system_text_color.value = get_readable_color(system_button_color.value)
+                } // If no file, it's all good; the color has been set to blue and white
 
                 // 1. Set Up TTS
-                buttonColor.value = Color.Blue
+                buttonColor.value = system_button_color.value
+                buttonTextColor.value = system_text_color.value
                 buttonText.value = "Setting Up Interlink"
 
                 setup_tts_file(context)
@@ -214,6 +222,7 @@ fun AppContent() {
                 }
 
                 buttonColor.value = Color.Black
+                buttonTextColor.value = Color.White
                 screen_locked.value = false
                 ready.value = true
 
@@ -265,7 +274,8 @@ fun AppContent() {
                             screen_locked.value = true  // Prevent user from tapping again
 
                             // RECORD AND MODERATE ==============
-                            buttonColor.value = Color.Blue
+                            buttonColor.value = system_button_color.value
+                            buttonTextColor.value = system_text_color.value
                             var prompt = recordAudioAndTranscribe(context, stop_listening,
                             buttonText).toString()  // This is voodoo. How does it work? Magic
                             /*
@@ -300,11 +310,10 @@ fun AppContent() {
 
                                     playAudioFromRawResource(context, R.raw.notice)
 
-                                    buttonColor.value = Color.Blue
-                                    buttonText.value = "Process completed."
-                                    playAudioFromRawResource(context, R.raw.finished)
+                                    play_system_message(context, R.raw.finished, buttonText,
+                                        buttonColor, buttonTextColor, system_button_color.value,
+                                        system_text_color.value, "Process completed.")
 
-                                    buttonColor.value = Color.Black
                                     buttonText.value = "AI personalized successfully. Please tap to start."
                                     first_start.value = false
 
@@ -358,35 +367,43 @@ fun AppContent() {
 
                                 if (assistant.value.name == "GAI-translator"){
                                     play_system_message(context, R.raw.connecttranslate, buttonText,
-                                    buttonColor, "Connected to GAI-translator")
+                                    buttonColor, buttonTextColor, system_button_color.value,
+                                        system_text_color.value, "Connected to GAI-translator")
 
                                 } else if (assistant.value.name == "GAI-generalist"){
                                     play_system_message(context, R.raw.connectgen, buttonText,
-                                        buttonColor, "Connected to GAI-generalist")
+                                        buttonColor, buttonTextColor, system_button_color.value,
+                                        system_text_color.value, "Connected to GAI-generalist")
 
                                 } else if (assistant.value.name == "GAI-engineer/mechanic"){
                                     play_system_message(context, R.raw.connectengin, buttonText,
-                                        buttonColor, "Connected to GAI-engineer/mechanic")
+                                        buttonColor, buttonTextColor, system_button_color.value,
+                                        system_text_color.value, "Connected to GAI-engineer/mechanic")
 
                                 } else if (assistant.value.name == "GAI-friend"){
                                     play_system_message(context, R.raw.connectfriend, buttonText,
-                                        buttonColor, "Connected to GAI-friend")
+                                        buttonColor, buttonTextColor, system_button_color.value,
+                                        system_text_color.value, "Connected to GAI-friend")
 
                                 } else if (assistant.value.name == "GAI-advisor") {
                                     play_system_message(context, R.raw.connectadvisor, buttonText,
-                                        buttonColor, "Connected to GAI-advisor")
+                                        buttonColor, buttonTextColor, system_button_color.value,
+                                        system_text_color.value, "Connected to GAI-advisor")
 
                                 } else if (assistant.value.name == "GAI-maths/accounting"){
                                     play_system_message(context, R.raw.connectmaths, buttonText,
-                                        buttonColor, "Connected to GAI-maths/accounting")
+                                        buttonColor, buttonTextColor, system_button_color.value,
+                                        system_text_color.value, "Connected to GAI-maths/accounting")
 
                                 } else if (assistant.value.name == "GAI-scientist/physicist"){
                                     play_system_message(context, R.raw.connectsci, buttonText,
-                                        buttonColor, "Connected to GAI-scientist/physicist")
+                                        buttonColor, buttonTextColor, system_button_color.value,
+                                        system_text_color.value, "Connected to GAI-scientist/physicist")
 
                                 } else if (assistant.value.name == "GAI-life_coach/psychiatrist"){
                                     play_system_message(context, R.raw.connectpsych, buttonText,
-                                        buttonColor, "Connected to GAI-life_coach/psychiatrist")
+                                        buttonColor, buttonTextColor, system_button_color.value,
+                                        system_text_color.value, "Connected to GAI-life_coach/psychiatrist")
 
                                 }
 
@@ -453,7 +470,30 @@ fun AppContent() {
                                 speak(openai_tts.value, context, coroutineScope, last_reply.value, speaking,
                                     assistant, buttonColor, buttonTextColor)
 
+                            } else if (prompt.contains("please set system color to", ignoreCase = true)){
+                                system_command = true
+                                val regex = Regex(Regex.escape("please set system color to"),
+                                    option = RegexOption.IGNORE_CASE)
+                                val desired_color = prompt.replace(regex, "").trim()
+                                val imagined_color = get_color(desired_color)
+                                val text_color = get_readable_color(imagined_color)
+
+                                system_button_color.value = imagined_color
+                                system_text_color.value = text_color
+                                val sys_color = GPTColor(listOf((imagined_color.red * 255).toInt(),
+                                    (imagined_color.green * 255).toInt(),
+                                    (imagined_color.blue * 255).toInt()))
+                                write_text_to_file(context, "colors.json",
+                                convert_gptcolor_to_json(sys_color)
+                                )
+
+                                play_system_message(context, R.raw.colorset, buttonText, buttonColor,
+                                    buttonTextColor, system_button_color.value, system_text_color.value,
+                                    "System color set successfully.\n${convert_gptcolor_to_json(sys_color)}\n" +
+                                            "\n${imagined_color}")
+
                             }
+
                             last_prompt.value = prompt
 
                             // Enter command processing code here
@@ -523,6 +563,7 @@ fun AppContent() {
                         } catch (e: Exception){
                             Log.d("Error", e.toString())
                             buttonColor.value = Color.Gray
+                            buttonTextColor.value = Color.White
                             buttonText.value = e.toString()
                             screen_locked.value = false
                         }

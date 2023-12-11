@@ -367,15 +367,20 @@ suspend fun speak(use_openai_tts: Boolean, context: Context,
 suspend fun play_system_message(context: Context, resource: Int,
                                 button_text_setting: MutableState<String>,
                                 button_color_setting: MutableState<Color>,
+                                button_text_color_setting: MutableState<Color>,
+                                system_color: Color,
+                                system_text_color: Color,
                                 message: String){
     /*
     This plays a resource and displays a message with the system color to indicate to
     the user that it is the system speaking.
      */
 
-    button_color_setting.value = Color.Blue
+    button_color_setting.value = system_color
+    button_text_color_setting.value = system_text_color
     button_text_setting.value = message
     vibrateWatch(context)
     playAudioFromRawResource(context, resource)
     button_color_setting.value = Color.Black
+    button_text_color_setting.value = Color.White
 }
