@@ -458,6 +458,7 @@ fun AppContent() {
 
                             // Enter command processing code here
                             if (!system_command){  // Only process non-commands
+                                prompt = "(sent@${get_now()}) $prompt"
 
                                 // 1. Grab main response from assistant AI
                                 last_prompt.value = prompt

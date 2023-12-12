@@ -6,6 +6,9 @@ import android.content.Context
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.Date
 
 class StateTracker(){
     val waiting = false
@@ -45,4 +48,9 @@ fun vibrateWatch(context: Context, miliseconds: Long = 500L, effect: Int = Vibra
             vibrator.vibrate(miliseconds)
         }
     }
+}
+
+fun get_now(): String {
+    val dateFormat = SimpleDateFormat("dd/MM/yy HH:mm:ss", Locale.getDefault())
+    return dateFormat.format(Date())
 }
